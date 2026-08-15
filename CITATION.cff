@@ -1,0 +1,30 @@
+cff-version: 1.2.0
+message: "If you refer to this work, please cite it as below."
+title: "Phantom transitions in phase-gated multi-agent voice systems"
+abstract: >-
+  A minimal reproduction, and fix, for a failure mode in phase-gated
+  multi-agent voice systems. A real-time agent commits a phase-handoff tool
+  call before the caller has finished speaking. The caller barges in, the
+  speech and reasoning in flight are discarded, and the handoff is not, so the
+  conversation advances to a stage the caller never triggered and no record
+  distinguishes the two. Three fixes are given, and the tool-layer guard among
+  them is established by twelve tests to have no bypass path reachable through
+  the public API.
+type: software
+authors:
+  - family-names: Kazemkhani
+    given-names: Amir Hossein
+    website: "https://amirkazemkhani.com"
+repository-code: "https://github.com/Kazemkhani/phantom-transition"
+url: "https://github.com/Kazemkhani/phantom-transition"
+license: MIT
+version: 1.1.0
+date-released: "2026-08-15"
+keywords:
+  - voice-ai
+  - multi-agent
+  - llm-agents
+  - barge-in
+  - ai-safety
+  - auditability
+  - tool-use
