@@ -6,7 +6,7 @@ A minimal reproduction, and fix, for a failure mode in phase-gated multi-agent v
 pip install -e ".[dev]" && pytest -v
 ```
 
-21 tests. No dependencies beyond pytest.
+24 tests. No dependencies beyond pytest.
 
 ## The fault
 
@@ -55,32 +55,38 @@ Note what the signature does not accept: the utterance. The guard cannot read wh
 
 Entry conditions are declarative:
 
-| Target | Requires |
-| --- | --- |
-| `DISCOVERY` | greeting delivered |
-| `PITCH` | at least two discovery answers recorded |
-| `CLOSE` | pitch delivered |
+| Target      | Requires                                |
+| ----------- | --------------------------------------- |
+| `DISCOVERY` | greeting delivered                      |
+| `PITCH`     | at least two discovery answers recorded |
+| `CLOSE`     | pitch delivered                         |
 
 Progression is forward only and strictly one phase at a time.
 
-## The ten guard tests
+## The twelve guard tests
 
 `tests/test_guard.py` establishes that the guard has no bypass path reachable through the public API.
 
-| # | Attempt |
-| --- | --- |
-| 1 | Skip a phase |
-| 2 | Jump straight to the final phase |
-| 3 | Advance without entry conditions met |
-| 4 | Move backwards |
-| 5 | Advance to the current phase |
-| 6 | Five prompt injections in the utterance |
-| 7 | Forged `authorised`, `override` and `force` arguments |
-| 8 | Malformed phase values, including the string `"CLOSE"` and the integer `3` |
-| 9 | Write guard facts from the utterance, twenty times |
-| 10 | Fifty consecutive interrupted turns, each carrying a handoff |
+| #   | Attempt                                                                    |
+| --- | -------------------------------------------------------------------------- |
+| 1   | Skip a phase                                                               |
+| 2   | Jump straight to the final phase                                           |
+| 3   | Advance without entry conditions met                                       |
+| 4   | Move backwards                                                             |
+| 5   | Advance to the current phase                                               |
+| 6   | Five prompt injections in the utterance                                    |
+| 7   | Forged `authorised`, `override` and `force` arguments                      |
+| 8   | Malformed phase values, including the string `"CLOSE"` and the integer `3` |
+| 9   | Write guard facts from the utterance, twenty times                         |
+| 10  | Fifty consecutive interrupted turns, each carrying a handoff               |
+| 11  | One interrupted turn carrying several chained handoffs                     |
+| 12  | Every four-turn sequence over an adversarial alphabet, exhaustively        |
 
-Two further tests check the guard is a gate rather than a wall: the legitimate path still traverses all four phases, and the guard is pure.
+Test 11 is a regression test. Cancelling handoffs in the order they executed restores each one's origin in turn, which leaves the phase where the last handoff began rather than where the turn did. One step survives, and because the log records a cancellation for every handoff, the transcript does not show it. A rollback that reintroduces the fault it exists to remove is worth a test of its own.
+
+Test 12 searches rather than argues. The other eleven are attempts I thought of; this one runs all 6,561 four-turn sequences drawn from an alphabet of legitimate turns, injections, forged arguments and interrupted chained handoffs, and after every turn asserts four invariants: the phase never moves backwards, never advances more than one step, never changes at all on an interrupted turn, and never enters a phase whose entry conditions did not already hold.
+
+Three further tests check the guard is a gate rather than a wall: the legitimate path still traverses all four phases, the guard is pure, and `Facts` cannot be mutated in place.
 
 ## What this is not
 

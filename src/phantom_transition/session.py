@@ -18,7 +18,7 @@ This module reproduces that, and then fixes it three ways.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from enum import IntEnum
 from typing import Any
 
@@ -53,17 +53,31 @@ class ToolCall:
 
 @dataclass(frozen=True)
 class Event:
+    """One thing the runtime did, recorded so an auditor can reconstruct it.
+
+    detail is the human-readable label. previous and target carry the same
+    information structurally, because a rollback that recovers state by parsing
+    its own log entry is one formatting change away from silently restoring the
+    wrong phase.
+    """
+
     kind: str
     detail: str = ""
+    previous: Phase | None = None
+    target: Phase | None = None
 
 
-@dataclass
+@dataclass(frozen=True)
 class Facts:
     """Structured state the guard reasons over.
 
     Nothing here is set by the model or by anything the caller says. Each field
     is written by the runtime from an observed event. This is the whole point:
     the guard's inputs are not reachable from the conversation.
+
+    Frozen, so that claim is structural rather than a convention the runtime is
+    trusted to keep. Recording a fact rebinds the record; it never mutates one
+    the guard may already be reasoning over.
     """
 
     greeting_delivered: bool = False
@@ -148,12 +162,20 @@ class Session:
             return Event("handoff_denied", f"unknown phase: {target!r}")
 
         previous, self.phase = self.phase, target
-        return Event("handoff_executed", f"{previous.name}->{target.name}")
+        return Event(
+            "handoff_executed", f"{previous.name}->{target.name}", previous=previous, target=target
+        )
 
     def _rollback(self, event: Event) -> Event:
-        previous_name = event.detail.split("->")[0]
-        self.phase = Phase[previous_name]
-        return Event("handoff_cancelled", event.detail)
+        """Undo one executed handoff, restoring the phase it advanced from."""
+        if event.previous is None:
+            # Not an assert: python -O would strip it, and a rollback that
+            # quietly declines to roll back is the fault wearing a fix's name.
+            raise ValueError(f"cannot roll back an event carrying no origin: {event!r}")
+        self.phase = event.previous
+        return Event(
+            "handoff_cancelled", event.detail, previous=event.target, target=event.previous
+        )
 
     # -- public API --------------------------------------------------------
     def handle_turn(self, turn: Turn, tool_calls: list[ToolCall] | None = None) -> list[Event]:
@@ -173,9 +195,14 @@ class Session:
         if turn.interrupted:
             emitted.append(Event("speech_discarded"))
             if self.cancel_handoff_on_interrupt:
-                for event in list(emitted):
-                    if event.kind == "handoff_executed":
-                        emitted.append(self._rollback(event))
+                # Unwound newest first. A turn may carry several handoffs, and
+                # undoing them in the order they ran restores each one's origin
+                # in turn, leaving the phase where the *last* handoff started
+                # rather than where the turn did. That residue is the same
+                # phantom transition this fix exists to remove.
+                executed = [e for e in emitted if e.kind == "handoff_executed"]
+                for event in reversed(executed):
+                    emitted.append(self._rollback(event))
         else:
             emitted.append(Event("spoke"))
             self._record(turn)
@@ -186,11 +213,11 @@ class Session:
     def _record(self, turn: Turn) -> None:
         """Write structured facts from observed events, never from utterances."""
         if self.phase is Phase.GREETING:
-            self.facts.greeting_delivered = True
+            self.facts = replace(self.facts, greeting_delivered=True)
         elif self.phase is Phase.DISCOVERY and turn.answers_a_discovery_question:
-            self.facts.discovery_answers += 1
+            self.facts = replace(self.facts, discovery_answers=self.facts.discovery_answers + 1)
         elif self.phase is Phase.PITCH:
-            self.facts.pitch_delivered = True
+            self.facts = replace(self.facts, pitch_delivered=True)
 
 
 __all__ = ["Phase", "Turn", "ToolCall", "Event", "Facts", "PhaseGuard", "Session"]
