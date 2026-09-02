@@ -92,6 +92,33 @@ LK_1310_MECH = (
 )
 
 
+PIPECAT_MECH = (
+    "InterruptionFrame is a system frame; every processor's base handler "
+    "(processors/frame_processor.py:839-841) calls _start_interruption (1130-1150), which "
+    "cancels that processor's in-flight process task, killing a streaming inference "
+    "mid-turn; LLMService.process_frame (services/llm_service.py:688-689) then runs "
+    "_handle_interruptions (758-761), cancelling every running function-call task whose "
+    "cancel_on_interruption is True, the register_function default (936-942), via "
+    "_cancel_function_call (2016-2020). Cancellation is CancelledError at the tool's next "
+    "await: a mutation already made stands, one still beyond the await never happens. The "
+    "per-tool opt-out, register_function(..., cancel_on_interruption=False), protects the "
+    "call from cancellation but does not suppress the barge-in"
+)
+
+OA_MECH = (
+    "tool execution is turn-atomic: the runner executes a turn's tool calls only after "
+    "that turn's model stream completes (run_internal/turn_resolution.py:784 "
+    "execute_tools_and_side_effects -> run_internal/tool_execution.py:2308 "
+    "execute_function_tool_calls). RunResultStreaming.cancel (result.py:818) with "
+    "mode=immediate calls _cleanup_tasks (result.py:849), cancelling the run task: a stop "
+    "mid-stream forecloses calls emitted in that stream, a stop during tool execution "
+    "delivers CancelledError at the tool's next await, and a stop during the following "
+    "reply turn rolls nothing back. mode=after_turn (documented: allows the LLM response "
+    "to finish and executes pending tool calls) completes the whole turn, so the reply "
+    "plays to the end and the mutation commits"
+)
+
+
 def runtimes() -> list[Runtime]:
     # The framework-free asyncio reproduction is measured separately
     # (results/core-v2/asyncio-interleaving.txt, with a six-row interleaving
@@ -122,27 +149,23 @@ def runtimes() -> list[Runtime]:
     rts.append(
         Runtime(
             key="pipecat",
-            label="Pipecat",
+            label="Pipecat 1.8.1",
             python="pipecat/.venv/bin/python",
             script="pipecat/run.py",
-            unsupported=("handoff-tool", "disallow-interruptions"),
-            unsupported_reason=(
-                "Pipecat has no agent-handoff primitive and no per-tool barge-in opt-out; "
-                "the cell has no faithful equivalent"
-            ),
+            version_hint="1.8.1",
+            unsupported=("handoff-tool",),
+            unsupported_reason="core Pipecat has no agent-handoff primitive",
+            mechanism={c.name: PIPECAT_MECH for c in CONFIGS},
         )
     )
     rts.append(
         Runtime(
             key="openai-agents",
-            label="OpenAI Agents SDK (Python)",
+            label="OpenAI Agents SDK (Python) 0.22.0",
             python="openai_agents/.venv/bin/python",
             script="openai_agents/run.py",
-            unsupported=("disallow-interruptions",),
-            unsupported_reason=(
-                "the SDK has no per-tool opt-out from cancellation; the cell has no "
-                "faithful equivalent"
-            ),
+            version_hint="0.22.0",
+            mechanism={c.name: OA_MECH for c in CONFIGS},
         )
     )
     return rts
