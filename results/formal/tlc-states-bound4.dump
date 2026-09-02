@@ -1,0 +1,819 @@
+State 1:
+/\ lastMove = [id |-> 0, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<>>]
+/\ prevFacts = [greeting_delivered |-> FALSE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> FALSE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 0
+/\ phase = 0
+/\ turn = 0
+/\ events = <<>>
+
+State 2:
+/\ lastMove = [id |-> 1, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<>>]
+/\ prevFacts = [greeting_delivered |-> FALSE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 0
+/\ phase = 0
+/\ turn = 1
+/\ events = <<"spoke">>
+
+State 3:
+/\ lastMove = [id |-> 2, interrupted |-> FALSE, answers |-> TRUE, calls |-> <<>>]
+/\ prevFacts = [greeting_delivered |-> FALSE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 0
+/\ phase = 0
+/\ turn = 1
+/\ events = <<"spoke">>
+
+State 4:
+/\ lastMove = [id |-> 3, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<3>>]
+/\ prevFacts = [greeting_delivered |-> FALSE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 0
+/\ phase = 0
+/\ turn = 1
+/\ events = <<"handoff_denied", "spoke">>
+
+State 5:
+/\ lastMove = [id |-> 4, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<1>>]
+/\ prevFacts = [greeting_delivered |-> FALSE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 0
+/\ phase = 0
+/\ turn = 1
+/\ events = <<"handoff_denied", "spoke">>
+
+State 6:
+/\ lastMove = [id |-> 5, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<2>>]
+/\ prevFacts = [greeting_delivered |-> FALSE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 0
+/\ phase = 0
+/\ turn = 1
+/\ events = <<"handoff_denied", "spoke">>
+
+State 7:
+/\ lastMove = [id |-> 6, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<3>>]
+/\ prevFacts = [greeting_delivered |-> FALSE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 0
+/\ phase = 0
+/\ turn = 1
+/\ events = <<"handoff_denied", "spoke">>
+
+State 8:
+/\ lastMove = [id |-> 7, interrupted |-> TRUE, answers |-> FALSE, calls |-> <<1>>]
+/\ prevFacts = [greeting_delivered |-> FALSE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> FALSE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 0
+/\ phase = 0
+/\ turn = 1
+/\ events = <<"handoff_denied", "speech_discarded">>
+
+State 9:
+/\ lastMove = [id |-> 8, interrupted |-> TRUE, answers |-> FALSE, calls |-> <<2, 3>>]
+/\ prevFacts = [greeting_delivered |-> FALSE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> FALSE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 0
+/\ phase = 0
+/\ turn = 1
+/\ events = <<"handoff_denied", "handoff_denied", "speech_discarded">>
+
+State 10:
+/\ lastMove = [id |-> 9, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<Forged>>]
+/\ prevFacts = [greeting_delivered |-> FALSE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 0
+/\ phase = 0
+/\ turn = 1
+/\ events = <<"handoff_denied", "spoke">>
+
+State 11:
+/\ lastMove = [id |-> 1, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<>>]
+/\ prevFacts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 0
+/\ phase = 0
+/\ turn = 2
+/\ events = <<"spoke">>
+
+State 12:
+/\ lastMove = [id |-> 2, interrupted |-> FALSE, answers |-> TRUE, calls |-> <<>>]
+/\ prevFacts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 0
+/\ phase = 0
+/\ turn = 2
+/\ events = <<"spoke">>
+
+State 13:
+/\ lastMove = [id |-> 3, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<3>>]
+/\ prevFacts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 0
+/\ phase = 0
+/\ turn = 2
+/\ events = <<"handoff_denied", "spoke">>
+
+State 14:
+/\ lastMove = [id |-> 4, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<1>>]
+/\ prevFacts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 0
+/\ phase = 1
+/\ turn = 2
+/\ events = <<"handoff_executed", "spoke">>
+
+State 15:
+/\ lastMove = [id |-> 5, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<2>>]
+/\ prevFacts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 0
+/\ phase = 0
+/\ turn = 2
+/\ events = <<"handoff_denied", "spoke">>
+
+State 16:
+/\ lastMove = [id |-> 6, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<3>>]
+/\ prevFacts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 0
+/\ phase = 0
+/\ turn = 2
+/\ events = <<"handoff_denied", "spoke">>
+
+State 17:
+/\ lastMove = [id |-> 7, interrupted |-> TRUE, answers |-> FALSE, calls |-> <<1>>]
+/\ prevFacts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 0
+/\ phase = 0
+/\ turn = 2
+/\ events = <<"handoff_executed", "speech_discarded", "handoff_cancelled">>
+
+State 18:
+/\ lastMove = [id |-> 8, interrupted |-> TRUE, answers |-> FALSE, calls |-> <<2, 3>>]
+/\ prevFacts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 0
+/\ phase = 0
+/\ turn = 2
+/\ events = <<"handoff_denied", "handoff_denied", "speech_discarded">>
+
+State 19:
+/\ lastMove = [id |-> 9, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<Forged>>]
+/\ prevFacts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 0
+/\ phase = 0
+/\ turn = 2
+/\ events = <<"handoff_denied", "spoke">>
+
+State 20:
+/\ lastMove = [id |-> 1, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<>>]
+/\ prevFacts = [greeting_delivered |-> FALSE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 0
+/\ phase = 0
+/\ turn = 2
+/\ events = <<"spoke">>
+
+State 21:
+/\ lastMove = [id |-> 2, interrupted |-> FALSE, answers |-> TRUE, calls |-> <<>>]
+/\ prevFacts = [greeting_delivered |-> FALSE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 0
+/\ phase = 0
+/\ turn = 2
+/\ events = <<"spoke">>
+
+State 22:
+/\ lastMove = [id |-> 3, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<3>>]
+/\ prevFacts = [greeting_delivered |-> FALSE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 0
+/\ phase = 0
+/\ turn = 2
+/\ events = <<"handoff_denied", "spoke">>
+
+State 23:
+/\ lastMove = [id |-> 4, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<1>>]
+/\ prevFacts = [greeting_delivered |-> FALSE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 0
+/\ phase = 0
+/\ turn = 2
+/\ events = <<"handoff_denied", "spoke">>
+
+State 24:
+/\ lastMove = [id |-> 5, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<2>>]
+/\ prevFacts = [greeting_delivered |-> FALSE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 0
+/\ phase = 0
+/\ turn = 2
+/\ events = <<"handoff_denied", "spoke">>
+
+State 25:
+/\ lastMove = [id |-> 6, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<3>>]
+/\ prevFacts = [greeting_delivered |-> FALSE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 0
+/\ phase = 0
+/\ turn = 2
+/\ events = <<"handoff_denied", "spoke">>
+
+State 26:
+/\ lastMove = [id |-> 7, interrupted |-> TRUE, answers |-> FALSE, calls |-> <<1>>]
+/\ prevFacts = [greeting_delivered |-> FALSE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> FALSE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 0
+/\ phase = 0
+/\ turn = 2
+/\ events = <<"handoff_denied", "speech_discarded">>
+
+State 27:
+/\ lastMove = [id |-> 8, interrupted |-> TRUE, answers |-> FALSE, calls |-> <<2, 3>>]
+/\ prevFacts = [greeting_delivered |-> FALSE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> FALSE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 0
+/\ phase = 0
+/\ turn = 2
+/\ events = <<"handoff_denied", "handoff_denied", "speech_discarded">>
+
+State 28:
+/\ lastMove = [id |-> 9, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<Forged>>]
+/\ prevFacts = [greeting_delivered |-> FALSE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 0
+/\ phase = 0
+/\ turn = 2
+/\ events = <<"handoff_denied", "spoke">>
+
+State 29:
+/\ lastMove = [id |-> 1, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<>>]
+/\ prevFacts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 0
+/\ phase = 0
+/\ turn = 3
+/\ events = <<"spoke">>
+
+State 30:
+/\ lastMove = [id |-> 2, interrupted |-> FALSE, answers |-> TRUE, calls |-> <<>>]
+/\ prevFacts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 0
+/\ phase = 0
+/\ turn = 3
+/\ events = <<"spoke">>
+
+State 31:
+/\ lastMove = [id |-> 3, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<3>>]
+/\ prevFacts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 0
+/\ phase = 0
+/\ turn = 3
+/\ events = <<"handoff_denied", "spoke">>
+
+State 32:
+/\ lastMove = [id |-> 4, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<1>>]
+/\ prevFacts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 0
+/\ phase = 1
+/\ turn = 3
+/\ events = <<"handoff_executed", "spoke">>
+
+State 33:
+/\ lastMove = [id |-> 5, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<2>>]
+/\ prevFacts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 0
+/\ phase = 0
+/\ turn = 3
+/\ events = <<"handoff_denied", "spoke">>
+
+State 34:
+/\ lastMove = [id |-> 6, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<3>>]
+/\ prevFacts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 0
+/\ phase = 0
+/\ turn = 3
+/\ events = <<"handoff_denied", "spoke">>
+
+State 35:
+/\ lastMove = [id |-> 7, interrupted |-> TRUE, answers |-> FALSE, calls |-> <<1>>]
+/\ prevFacts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 0
+/\ phase = 0
+/\ turn = 3
+/\ events = <<"handoff_executed", "speech_discarded", "handoff_cancelled">>
+
+State 36:
+/\ lastMove = [id |-> 8, interrupted |-> TRUE, answers |-> FALSE, calls |-> <<2, 3>>]
+/\ prevFacts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 0
+/\ phase = 0
+/\ turn = 3
+/\ events = <<"handoff_denied", "handoff_denied", "speech_discarded">>
+
+State 37:
+/\ lastMove = [id |-> 9, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<Forged>>]
+/\ prevFacts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 0
+/\ phase = 0
+/\ turn = 3
+/\ events = <<"handoff_denied", "spoke">>
+
+State 38:
+/\ lastMove = [id |-> 1, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<>>]
+/\ prevFacts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 1
+/\ phase = 1
+/\ turn = 3
+/\ events = <<"spoke">>
+
+State 39:
+/\ lastMove = [id |-> 2, interrupted |-> FALSE, answers |-> TRUE, calls |-> <<>>]
+/\ prevFacts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 1, pitch_delivered |-> FALSE]
+/\ prevPhase = 1
+/\ phase = 1
+/\ turn = 3
+/\ events = <<"spoke">>
+
+State 40:
+/\ lastMove = [id |-> 3, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<3>>]
+/\ prevFacts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 1
+/\ phase = 1
+/\ turn = 3
+/\ events = <<"handoff_denied", "spoke">>
+
+State 41:
+/\ lastMove = [id |-> 4, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<1>>]
+/\ prevFacts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 1
+/\ phase = 1
+/\ turn = 3
+/\ events = <<"handoff_denied", "spoke">>
+
+State 42:
+/\ lastMove = [id |-> 5, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<2>>]
+/\ prevFacts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 1
+/\ phase = 1
+/\ turn = 3
+/\ events = <<"handoff_denied", "spoke">>
+
+State 43:
+/\ lastMove = [id |-> 6, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<3>>]
+/\ prevFacts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 1
+/\ phase = 1
+/\ turn = 3
+/\ events = <<"handoff_denied", "spoke">>
+
+State 44:
+/\ lastMove = [id |-> 7, interrupted |-> TRUE, answers |-> FALSE, calls |-> <<1>>]
+/\ prevFacts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 1
+/\ phase = 1
+/\ turn = 3
+/\ events = <<"handoff_denied", "speech_discarded">>
+
+State 45:
+/\ lastMove = [id |-> 8, interrupted |-> TRUE, answers |-> FALSE, calls |-> <<2, 3>>]
+/\ prevFacts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 1
+/\ phase = 1
+/\ turn = 3
+/\ events = <<"handoff_denied", "handoff_denied", "speech_discarded">>
+
+State 46:
+/\ lastMove = [id |-> 9, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<Forged>>]
+/\ prevFacts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 1
+/\ phase = 1
+/\ turn = 3
+/\ events = <<"handoff_denied", "spoke">>
+
+State 47:
+/\ lastMove = [id |-> 1, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<>>]
+/\ prevFacts = [greeting_delivered |-> FALSE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 0
+/\ phase = 0
+/\ turn = 3
+/\ events = <<"spoke">>
+
+State 48:
+/\ lastMove = [id |-> 2, interrupted |-> FALSE, answers |-> TRUE, calls |-> <<>>]
+/\ prevFacts = [greeting_delivered |-> FALSE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 0
+/\ phase = 0
+/\ turn = 3
+/\ events = <<"spoke">>
+
+State 49:
+/\ lastMove = [id |-> 3, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<3>>]
+/\ prevFacts = [greeting_delivered |-> FALSE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 0
+/\ phase = 0
+/\ turn = 3
+/\ events = <<"handoff_denied", "spoke">>
+
+State 50:
+/\ lastMove = [id |-> 4, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<1>>]
+/\ prevFacts = [greeting_delivered |-> FALSE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 0
+/\ phase = 0
+/\ turn = 3
+/\ events = <<"handoff_denied", "spoke">>
+
+State 51:
+/\ lastMove = [id |-> 5, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<2>>]
+/\ prevFacts = [greeting_delivered |-> FALSE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 0
+/\ phase = 0
+/\ turn = 3
+/\ events = <<"handoff_denied", "spoke">>
+
+State 52:
+/\ lastMove = [id |-> 6, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<3>>]
+/\ prevFacts = [greeting_delivered |-> FALSE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 0
+/\ phase = 0
+/\ turn = 3
+/\ events = <<"handoff_denied", "spoke">>
+
+State 53:
+/\ lastMove = [id |-> 7, interrupted |-> TRUE, answers |-> FALSE, calls |-> <<1>>]
+/\ prevFacts = [greeting_delivered |-> FALSE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> FALSE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 0
+/\ phase = 0
+/\ turn = 3
+/\ events = <<"handoff_denied", "speech_discarded">>
+
+State 54:
+/\ lastMove = [id |-> 8, interrupted |-> TRUE, answers |-> FALSE, calls |-> <<2, 3>>]
+/\ prevFacts = [greeting_delivered |-> FALSE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> FALSE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 0
+/\ phase = 0
+/\ turn = 3
+/\ events = <<"handoff_denied", "handoff_denied", "speech_discarded">>
+
+State 55:
+/\ lastMove = [id |-> 9, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<Forged>>]
+/\ prevFacts = [greeting_delivered |-> FALSE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 0
+/\ phase = 0
+/\ turn = 3
+/\ events = <<"handoff_denied", "spoke">>
+
+State 56:
+/\ lastMove = [id |-> 1, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<>>]
+/\ prevFacts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 0
+/\ phase = 0
+/\ turn = 4
+/\ events = <<"spoke">>
+
+State 57:
+/\ lastMove = [id |-> 2, interrupted |-> FALSE, answers |-> TRUE, calls |-> <<>>]
+/\ prevFacts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 0
+/\ phase = 0
+/\ turn = 4
+/\ events = <<"spoke">>
+
+State 58:
+/\ lastMove = [id |-> 3, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<3>>]
+/\ prevFacts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 0
+/\ phase = 0
+/\ turn = 4
+/\ events = <<"handoff_denied", "spoke">>
+
+State 59:
+/\ lastMove = [id |-> 4, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<1>>]
+/\ prevFacts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 0
+/\ phase = 1
+/\ turn = 4
+/\ events = <<"handoff_executed", "spoke">>
+
+State 60:
+/\ lastMove = [id |-> 5, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<2>>]
+/\ prevFacts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 0
+/\ phase = 0
+/\ turn = 4
+/\ events = <<"handoff_denied", "spoke">>
+
+State 61:
+/\ lastMove = [id |-> 6, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<3>>]
+/\ prevFacts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 0
+/\ phase = 0
+/\ turn = 4
+/\ events = <<"handoff_denied", "spoke">>
+
+State 62:
+/\ lastMove = [id |-> 7, interrupted |-> TRUE, answers |-> FALSE, calls |-> <<1>>]
+/\ prevFacts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 0
+/\ phase = 0
+/\ turn = 4
+/\ events = <<"handoff_executed", "speech_discarded", "handoff_cancelled">>
+
+State 63:
+/\ lastMove = [id |-> 8, interrupted |-> TRUE, answers |-> FALSE, calls |-> <<2, 3>>]
+/\ prevFacts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 0
+/\ phase = 0
+/\ turn = 4
+/\ events = <<"handoff_denied", "handoff_denied", "speech_discarded">>
+
+State 64:
+/\ lastMove = [id |-> 9, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<Forged>>]
+/\ prevFacts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 0
+/\ phase = 0
+/\ turn = 4
+/\ events = <<"handoff_denied", "spoke">>
+
+State 65:
+/\ lastMove = [id |-> 1, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<>>]
+/\ prevFacts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 1
+/\ phase = 1
+/\ turn = 4
+/\ events = <<"spoke">>
+
+State 66:
+/\ lastMove = [id |-> 2, interrupted |-> FALSE, answers |-> TRUE, calls |-> <<>>]
+/\ prevFacts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 1, pitch_delivered |-> FALSE]
+/\ prevPhase = 1
+/\ phase = 1
+/\ turn = 4
+/\ events = <<"spoke">>
+
+State 67:
+/\ lastMove = [id |-> 3, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<3>>]
+/\ prevFacts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 1
+/\ phase = 1
+/\ turn = 4
+/\ events = <<"handoff_denied", "spoke">>
+
+State 68:
+/\ lastMove = [id |-> 4, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<1>>]
+/\ prevFacts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 1
+/\ phase = 1
+/\ turn = 4
+/\ events = <<"handoff_denied", "spoke">>
+
+State 69:
+/\ lastMove = [id |-> 5, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<2>>]
+/\ prevFacts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 1
+/\ phase = 1
+/\ turn = 4
+/\ events = <<"handoff_denied", "spoke">>
+
+State 70:
+/\ lastMove = [id |-> 6, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<3>>]
+/\ prevFacts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 1
+/\ phase = 1
+/\ turn = 4
+/\ events = <<"handoff_denied", "spoke">>
+
+State 71:
+/\ lastMove = [id |-> 7, interrupted |-> TRUE, answers |-> FALSE, calls |-> <<1>>]
+/\ prevFacts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 1
+/\ phase = 1
+/\ turn = 4
+/\ events = <<"handoff_denied", "speech_discarded">>
+
+State 72:
+/\ lastMove = [id |-> 8, interrupted |-> TRUE, answers |-> FALSE, calls |-> <<2, 3>>]
+/\ prevFacts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 1
+/\ phase = 1
+/\ turn = 4
+/\ events = <<"handoff_denied", "handoff_denied", "speech_discarded">>
+
+State 73:
+/\ lastMove = [id |-> 9, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<Forged>>]
+/\ prevFacts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 1
+/\ phase = 1
+/\ turn = 4
+/\ events = <<"handoff_denied", "spoke">>
+
+State 74:
+/\ lastMove = [id |-> 1, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<>>]
+/\ prevFacts = [greeting_delivered |-> TRUE, discovery_answers |-> 1, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 1, pitch_delivered |-> FALSE]
+/\ prevPhase = 1
+/\ phase = 1
+/\ turn = 4
+/\ events = <<"spoke">>
+
+State 75:
+/\ lastMove = [id |-> 2, interrupted |-> FALSE, answers |-> TRUE, calls |-> <<>>]
+/\ prevFacts = [greeting_delivered |-> TRUE, discovery_answers |-> 1, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 2, pitch_delivered |-> FALSE]
+/\ prevPhase = 1
+/\ phase = 1
+/\ turn = 4
+/\ events = <<"spoke">>
+
+State 76:
+/\ lastMove = [id |-> 3, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<3>>]
+/\ prevFacts = [greeting_delivered |-> TRUE, discovery_answers |-> 1, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 1, pitch_delivered |-> FALSE]
+/\ prevPhase = 1
+/\ phase = 1
+/\ turn = 4
+/\ events = <<"handoff_denied", "spoke">>
+
+State 77:
+/\ lastMove = [id |-> 4, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<1>>]
+/\ prevFacts = [greeting_delivered |-> TRUE, discovery_answers |-> 1, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 1, pitch_delivered |-> FALSE]
+/\ prevPhase = 1
+/\ phase = 1
+/\ turn = 4
+/\ events = <<"handoff_denied", "spoke">>
+
+State 78:
+/\ lastMove = [id |-> 5, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<2>>]
+/\ prevFacts = [greeting_delivered |-> TRUE, discovery_answers |-> 1, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 1, pitch_delivered |-> FALSE]
+/\ prevPhase = 1
+/\ phase = 1
+/\ turn = 4
+/\ events = <<"handoff_denied", "spoke">>
+
+State 79:
+/\ lastMove = [id |-> 6, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<3>>]
+/\ prevFacts = [greeting_delivered |-> TRUE, discovery_answers |-> 1, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 1, pitch_delivered |-> FALSE]
+/\ prevPhase = 1
+/\ phase = 1
+/\ turn = 4
+/\ events = <<"handoff_denied", "spoke">>
+
+State 80:
+/\ lastMove = [id |-> 7, interrupted |-> TRUE, answers |-> FALSE, calls |-> <<1>>]
+/\ prevFacts = [greeting_delivered |-> TRUE, discovery_answers |-> 1, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 1, pitch_delivered |-> FALSE]
+/\ prevPhase = 1
+/\ phase = 1
+/\ turn = 4
+/\ events = <<"handoff_denied", "speech_discarded">>
+
+State 81:
+/\ lastMove = [id |-> 8, interrupted |-> TRUE, answers |-> FALSE, calls |-> <<2, 3>>]
+/\ prevFacts = [greeting_delivered |-> TRUE, discovery_answers |-> 1, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 1, pitch_delivered |-> FALSE]
+/\ prevPhase = 1
+/\ phase = 1
+/\ turn = 4
+/\ events = <<"handoff_denied", "handoff_denied", "speech_discarded">>
+
+State 82:
+/\ lastMove = [id |-> 9, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<Forged>>]
+/\ prevFacts = [greeting_delivered |-> TRUE, discovery_answers |-> 1, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 1, pitch_delivered |-> FALSE]
+/\ prevPhase = 1
+/\ phase = 1
+/\ turn = 4
+/\ events = <<"handoff_denied", "spoke">>
+
+State 83:
+/\ lastMove = [id |-> 1, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<>>]
+/\ prevFacts = [greeting_delivered |-> FALSE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 0
+/\ phase = 0
+/\ turn = 4
+/\ events = <<"spoke">>
+
+State 84:
+/\ lastMove = [id |-> 2, interrupted |-> FALSE, answers |-> TRUE, calls |-> <<>>]
+/\ prevFacts = [greeting_delivered |-> FALSE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 0
+/\ phase = 0
+/\ turn = 4
+/\ events = <<"spoke">>
+
+State 85:
+/\ lastMove = [id |-> 3, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<3>>]
+/\ prevFacts = [greeting_delivered |-> FALSE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 0
+/\ phase = 0
+/\ turn = 4
+/\ events = <<"handoff_denied", "spoke">>
+
+State 86:
+/\ lastMove = [id |-> 4, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<1>>]
+/\ prevFacts = [greeting_delivered |-> FALSE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 0
+/\ phase = 0
+/\ turn = 4
+/\ events = <<"handoff_denied", "spoke">>
+
+State 87:
+/\ lastMove = [id |-> 5, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<2>>]
+/\ prevFacts = [greeting_delivered |-> FALSE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 0
+/\ phase = 0
+/\ turn = 4
+/\ events = <<"handoff_denied", "spoke">>
+
+State 88:
+/\ lastMove = [id |-> 6, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<3>>]
+/\ prevFacts = [greeting_delivered |-> FALSE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 0
+/\ phase = 0
+/\ turn = 4
+/\ events = <<"handoff_denied", "spoke">>
+
+State 89:
+/\ lastMove = [id |-> 7, interrupted |-> TRUE, answers |-> FALSE, calls |-> <<1>>]
+/\ prevFacts = [greeting_delivered |-> FALSE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> FALSE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 0
+/\ phase = 0
+/\ turn = 4
+/\ events = <<"handoff_denied", "speech_discarded">>
+
+State 90:
+/\ lastMove = [id |-> 8, interrupted |-> TRUE, answers |-> FALSE, calls |-> <<2, 3>>]
+/\ prevFacts = [greeting_delivered |-> FALSE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> FALSE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 0
+/\ phase = 0
+/\ turn = 4
+/\ events = <<"handoff_denied", "handoff_denied", "speech_discarded">>
+
+State 91:
+/\ lastMove = [id |-> 9, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<Forged>>]
+/\ prevFacts = [greeting_delivered |-> FALSE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 0
+/\ phase = 0
+/\ turn = 4
+/\ events = <<"handoff_denied", "spoke">>
+

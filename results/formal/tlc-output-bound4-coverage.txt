@@ -1,0 +1,32 @@
+TLC2 Version 2026.09.01.002747 (rev: 95b800c)
+Running breadth-first search Model-Checking with fp 64 and seed 1659336947758000254 with 1 worker on 11 cores with 4096MB heap and 64MB offheap memory [pid: 49770] (Mac OS X 26.3 aarch64, Oracle Corporation 23.0.1 64bit, MSBDiskFPSet, DiskStateQueue).
+Parsing file /Users/amirhosseinkazemkhani/dev/pt-formal/formal/PhaseGuard.tla
+Parsing file /private/var/folders/l9/_718fgnd2njfcw9vx_p_6p_00000gn/T/tlc-13983504544848682251/Naturals.tla (jar:file:/Users/amirhosseinkazemkhani/dev/pt-formal/formal/tools/tla2tools.jar!/tla2sany/StandardModules/Naturals.tla)
+Parsing file /private/var/folders/l9/_718fgnd2njfcw9vx_p_6p_00000gn/T/tlc-13983504544848682251/Sequences.tla (jar:file:/Users/amirhosseinkazemkhani/dev/pt-formal/formal/tools/tla2tools.jar!/tla2sany/StandardModules/Sequences.tla)
+Parsing file /private/var/folders/l9/_718fgnd2njfcw9vx_p_6p_00000gn/T/tlc-13983504544848682251/_TLCTrace.tla (jar:file:/Users/amirhosseinkazemkhani/dev/pt-formal/formal/tools/tla2tools.jar!/tla2sany/StandardModules/_TLCTrace.tla)
+Parsing file /private/var/folders/l9/_718fgnd2njfcw9vx_p_6p_00000gn/T/tlc-13983504544848682251/TLC.tla (jar:file:/Users/amirhosseinkazemkhani/dev/pt-formal/formal/tools/tla2tools.jar!/tla2sany/StandardModules/TLC.tla)
+Parsing file /private/var/folders/l9/_718fgnd2njfcw9vx_p_6p_00000gn/T/tlc-13983504544848682251/TLCExt.tla (jar:file:/Users/amirhosseinkazemkhani/dev/pt-formal/formal/tools/tla2tools.jar!/tla2sany/StandardModules/TLCExt.tla)
+Parsing file /private/var/folders/l9/_718fgnd2njfcw9vx_p_6p_00000gn/T/tlc-13983504544848682251/FiniteSets.tla (jar:file:/Users/amirhosseinkazemkhani/dev/pt-formal/formal/tools/tla2tools.jar!/tla2sany/StandardModules/FiniteSets.tla)
+Parsing file /private/var/folders/l9/_718fgnd2njfcw9vx_p_6p_00000gn/T/tlc-13983504544848682251/Integers.tla (jar:file:/Users/amirhosseinkazemkhani/dev/pt-formal/formal/tools/tla2tools.jar!/tla2sany/StandardModules/Integers.tla)
+Semantic processing of module Naturals
+Semantic processing of module Sequences
+Semantic processing of module FiniteSets
+Semantic processing of module TLC
+Semantic processing of module Integers
+Semantic processing of module TLCExt
+Semantic processing of module _TLCTrace
+Semantic processing of module PhaseGuard
+Linting of module TLCExt
+Linting of module _TLCTrace
+Linting of module PhaseGuard
+Starting... (2026-09-02 07:24:50)
+Computing initial states...
+Finished computing initial states: 1 distinct state generated at 2026-09-02 07:24:50.
+Model checking completed. No error has been found.
+  Estimates of the probability that TLC did not check all reachable states
+  because two distinct states had the same fingerprint:
+  calculated (optimistic):  val = 2.2E-15
+532 states generated, 91 distinct states found, 0 states left on queue.
+The depth of the complete state graph search is 5.
+The average outdegree of the complete state graph is 1 (minimum is 0, the maximum 9 and the 95th percentile is 9).
+Finished in 00s at (2026-09-02 07:24:50)

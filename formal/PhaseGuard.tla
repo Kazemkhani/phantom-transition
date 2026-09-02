@@ -231,4 +231,13 @@ GroundedTransition ==
 (* while the session is in PITCH.                                          *)
 PitchRecordsItsDelivery == phase = PITCH => facts.pitch_delivered
 
+(* Bound diagnostics, not properties of the guard. NeverReachesPitch holds   *)
+(* at MaxTurns = 4: the four-turn bound of test_12 cannot reach PITCH, so   *)
+(* it never exercises the PITCH and CLOSE gates on the legitimate path.     *)
+(* NeverReachesClose is expected to be violated at MaxTurns = 8; the trace  *)
+(* TLC prints is the witness that the legitimate path reaches CLOSE within  *)
+(* that bound.                                                              *)
+NeverReachesPitch == phase < PITCH
+NeverReachesClose == phase /= CLOSE
+
 =============================================================================

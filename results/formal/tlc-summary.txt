@@ -1,0 +1,18 @@
+PhaseGuard.cfg                         exit=0   expected=0   Model checking completed. No error has been found.
+    532 states generated, 91 distinct states found, 0 states left on queue.
+PhaseGuard_bound8.cfg                  exit=0   expected=0   Model checking completed. No error has been found.
+    2719 states generated, 406 distinct states found, 0 states left on queue.
+PhaseGuard_bound4_coverage.cfg         exit=0   expected=0   Model checking completed. No error has been found.
+    532 states generated, 91 distinct states found, 0 states left on queue.
+PhaseGuard_bound8_witness.cfg          exit=12  expected=12  Error: Invariant NeverReachesClose is violated.
+    1102 states generated, 184 distinct states found, 60 states left on queue.
+PhaseGuard_unguarded.cfg               exit=12  expected=12  Error: Invariant AtMostOneStep is violated.
+    4 states generated, 4 distinct states found, 2 states left on queue.
+PhaseGuard_unguarded_interrupt.cfg     exit=12  expected=12  Error: Invariant InterruptedTurnsAreInert is violated.
+    8 states generated, 8 distinct states found, 6 states left on queue.
+PhaseGuard_cancel_only.cfg             exit=12  expected=12  Error: Invariant AtMostOneStep is violated.
+    4 states generated, 4 distinct states found, 2 states left on queue.
+conformance bound4             exit=0   IDENTICAL: the specification and the reference implementation agree on every reachable state
+conformance bound8             exit=0   IDENTICAL: the specification and the reference implementation agree on every reachable state
+conformance unguarded          exit=0   IDENTICAL: the specification and the reference implementation agree on every reachable state
+all configurations produced their expected outcome

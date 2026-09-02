@@ -1,0 +1,93 @@
+TLC2 Version 2026.09.01.002747 (rev: 95b800c)
+Running breadth-first search Model-Checking with fp 91 and seed -5594942949764699280 with 1 worker on 11 cores with 4096MB heap and 64MB offheap memory [pid: 49791] (Mac OS X 26.3 aarch64, Oracle Corporation 23.0.1 64bit, MSBDiskFPSet, DiskStateQueue).
+Parsing file /Users/amirhosseinkazemkhani/dev/pt-formal/formal/PhaseGuard.tla
+Parsing file /private/var/folders/l9/_718fgnd2njfcw9vx_p_6p_00000gn/T/tlc-8522206202585049405/Naturals.tla (jar:file:/Users/amirhosseinkazemkhani/dev/pt-formal/formal/tools/tla2tools.jar!/tla2sany/StandardModules/Naturals.tla)
+Parsing file /private/var/folders/l9/_718fgnd2njfcw9vx_p_6p_00000gn/T/tlc-8522206202585049405/Sequences.tla (jar:file:/Users/amirhosseinkazemkhani/dev/pt-formal/formal/tools/tla2tools.jar!/tla2sany/StandardModules/Sequences.tla)
+Parsing file /private/var/folders/l9/_718fgnd2njfcw9vx_p_6p_00000gn/T/tlc-8522206202585049405/_TLCTrace.tla (jar:file:/Users/amirhosseinkazemkhani/dev/pt-formal/formal/tools/tla2tools.jar!/tla2sany/StandardModules/_TLCTrace.tla)
+Parsing file /private/var/folders/l9/_718fgnd2njfcw9vx_p_6p_00000gn/T/tlc-8522206202585049405/TLC.tla (jar:file:/Users/amirhosseinkazemkhani/dev/pt-formal/formal/tools/tla2tools.jar!/tla2sany/StandardModules/TLC.tla)
+Parsing file /private/var/folders/l9/_718fgnd2njfcw9vx_p_6p_00000gn/T/tlc-8522206202585049405/TLCExt.tla (jar:file:/Users/amirhosseinkazemkhani/dev/pt-formal/formal/tools/tla2tools.jar!/tla2sany/StandardModules/TLCExt.tla)
+Parsing file /private/var/folders/l9/_718fgnd2njfcw9vx_p_6p_00000gn/T/tlc-8522206202585049405/FiniteSets.tla (jar:file:/Users/amirhosseinkazemkhani/dev/pt-formal/formal/tools/tla2tools.jar!/tla2sany/StandardModules/FiniteSets.tla)
+Parsing file /private/var/folders/l9/_718fgnd2njfcw9vx_p_6p_00000gn/T/tlc-8522206202585049405/Integers.tla (jar:file:/Users/amirhosseinkazemkhani/dev/pt-formal/formal/tools/tla2tools.jar!/tla2sany/StandardModules/Integers.tla)
+Semantic processing of module Naturals
+Semantic processing of module Sequences
+Semantic processing of module FiniteSets
+Semantic processing of module TLC
+Semantic processing of module Integers
+Semantic processing of module TLCExt
+Semantic processing of module _TLCTrace
+Semantic processing of module PhaseGuard
+Linting of module TLCExt
+Linting of module _TLCTrace
+Linting of module PhaseGuard
+Starting... (2026-09-02 07:24:50)
+Computing initial states...
+Finished computing initial states: 1 distinct state generated at 2026-09-02 07:24:50.
+Error: Invariant NeverReachesClose is violated.
+Error: The behavior up to this point is:
+State 1: <Initial predicate>
+/\ lastMove = [id |-> 0, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<>>]
+/\ prevFacts = [greeting_delivered |-> FALSE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> FALSE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 0
+/\ phase = 0
+/\ turn = 0
+/\ events = <<>>
+
+State 2: <HandleTurn([id |-> 1, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<>>]) line 161, col 5 to line 182, col 20 of module PhaseGuard>
+/\ lastMove = [id |-> 1, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<>>]
+/\ prevFacts = [greeting_delivered |-> FALSE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 0
+/\ phase = 0
+/\ turn = 1
+/\ events = <<"spoke">>
+
+State 3: <HandleTurn([id |-> 4, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<1>>]) line 161, col 5 to line 182, col 20 of module PhaseGuard>
+/\ lastMove = [id |-> 4, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<1>>]
+/\ prevFacts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ prevPhase = 0
+/\ phase = 1
+/\ turn = 2
+/\ events = <<"handoff_executed", "spoke">>
+
+State 4: <HandleTurn([id |-> 2, interrupted |-> FALSE, answers |-> TRUE, calls |-> <<>>]) line 161, col 5 to line 182, col 20 of module PhaseGuard>
+/\ lastMove = [id |-> 2, interrupted |-> FALSE, answers |-> TRUE, calls |-> <<>>]
+/\ prevFacts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 1, pitch_delivered |-> FALSE]
+/\ prevPhase = 1
+/\ phase = 1
+/\ turn = 3
+/\ events = <<"spoke">>
+
+State 5: <HandleTurn([id |-> 2, interrupted |-> FALSE, answers |-> TRUE, calls |-> <<>>]) line 161, col 5 to line 182, col 20 of module PhaseGuard>
+/\ lastMove = [id |-> 2, interrupted |-> FALSE, answers |-> TRUE, calls |-> <<>>]
+/\ prevFacts = [greeting_delivered |-> TRUE, discovery_answers |-> 1, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 2, pitch_delivered |-> FALSE]
+/\ prevPhase = 1
+/\ phase = 1
+/\ turn = 4
+/\ events = <<"spoke">>
+
+State 6: <HandleTurn([id |-> 5, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<2>>]) line 161, col 5 to line 182, col 20 of module PhaseGuard>
+/\ lastMove = [id |-> 5, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<2>>]
+/\ prevFacts = [greeting_delivered |-> TRUE, discovery_answers |-> 2, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 2, pitch_delivered |-> TRUE]
+/\ prevPhase = 1
+/\ phase = 2
+/\ turn = 5
+/\ events = <<"handoff_executed", "spoke">>
+
+State 7: <HandleTurn([id |-> 3, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<3>>]) line 161, col 5 to line 182, col 20 of module PhaseGuard>
+/\ lastMove = [id |-> 3, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<3>>]
+/\ prevFacts = [greeting_delivered |-> TRUE, discovery_answers |-> 2, pitch_delivered |-> TRUE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 2, pitch_delivered |-> TRUE]
+/\ prevPhase = 2
+/\ phase = 3
+/\ turn = 6
+/\ events = <<"handoff_executed", "spoke">>
+
+1102 states generated, 184 distinct states found, 60 states left on queue.
+The depth of the complete state graph search is 7.
+Finished in 00s at (2026-09-02 07:24:51)
+Trace exploration spec path: ./PhaseGuard_TTrace_1788321290.tla
