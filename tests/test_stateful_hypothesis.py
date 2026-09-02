@@ -31,7 +31,7 @@ from hypothesis import strategies as st
 from hypothesis.reporting import with_reporter
 from hypothesis.stateful import RuleBasedStateMachine, invariant, rule, run_state_machine_as_test
 
-from phantom_transition import Phase, Session, ToolCall, Turn
+from phantom_transition import Facts, Phase, PhaseGuard, Session, ToolCall, Turn
 from phantom_transition.session import ENTRY_CONDITIONS
 
 PROMPT_INJECTIONS = [
@@ -240,6 +240,58 @@ def test_an_interrupted_turn_writes_no_facts():
     # And the gate must still refuse PITCH, because no answer was recorded.
     events = s.handle_turn(Turn("ok"), [_advance(Phase.PITCH)])
     _require(events[0].kind == "handoff_denied", "PITCH admitted on facts from interrupted turns")
+
+
+def test_refusal_reasons_name_the_violated_rule():
+    """Kills the masked guard-clause mutants found by mutation/run_mutants.py.
+
+    Removing the backwards check alone, or the one-step check alone, changes
+    no admission decision: a backward target also fails the one-step check,
+    and a skipped target also fails its entry condition, because each gate's
+    evidence can only be recorded in the phase before it. The refusal reason
+    is the only observable difference, and it matters: it is what the model
+    is told, and it is what the refusal-rate instrumentation counts.
+    """
+    guard = PhaseGuard()
+    _require(guard.check(Phase.PITCH, Phase.GREETING, Facts()) == (False, "phase progression is forward only"),
+             "a backward move must be refused as backward, not as something else")
+    _require(guard.check(Phase.GREETING, Phase.PITCH, Facts()) == (False, "cannot skip from GREETING to PITCH"),
+             "a skip must be refused as a skip, not as something else")
+    _require(guard.check(Phase.GREETING, Phase.GREETING, Facts())[1] == "already in that phase",
+             "a same-phase move must be refused as such")
+
+
+def test_one_recorded_answer_does_not_open_pitch():
+    """Kills the off-by-one gate mutant (core-v2 M4) inside the suite itself.
+
+    The invariants in this file read ENTRY_CONDITIONS, so a weakened gate
+    satisfies its own weakened condition and they cannot see it. This test
+    freezes the threshold instead of deriving it.
+    """
+    facts = Facts(greeting_delivered=True, discovery_answers=1)
+    _require(PhaseGuard().check(Phase.DISCOVERY, Phase.PITCH, facts)[0] is False,
+             "PITCH must not open on one recorded answer")
+    _require(PhaseGuard().check(Phase.DISCOVERY, Phase.PITCH, Facts(greeting_delivered=True, discovery_answers=2))[0] is True,
+             "PITCH must open on two recorded answers")
+
+
+def test_answers_are_not_recorded_while_in_pitch():
+    """Kills the stale-count mutant (core-v2 M7): a mis-scoped record branch.
+
+    The corrupted counter never changes an admission decision in this model,
+    which is why core-v2's phase-level equivalence search could not
+    distinguish the mutant to depth 6. The facts record is still public,
+    audited state; this pins it.
+    """
+    s = Session()
+    s.handle_turn(Turn("hello"))
+    s.handle_turn(Turn("ok"), [_advance(Phase.DISCOVERY)])
+    s.handle_turn(Turn("ten staff", answers_a_discovery_question=True))
+    s.handle_turn(Turn("evenings", answers_a_discovery_question=True))
+    s.handle_turn(Turn("ok"), [_advance(Phase.PITCH)])
+    s.handle_turn(Turn("that also answers a question", answers_a_discovery_question=True))
+    _require(s.facts.discovery_answers == 2, "an answer was recorded while in PITCH")
+    _require(s.facts.pitch_delivered is True, "the pitch turn was not recorded")
 
 
 # -- the broken variants are falsified, and the failure shrinks ---------------------
