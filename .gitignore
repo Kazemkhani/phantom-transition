@@ -9,3 +9,14 @@ dist/
 .venv/
 venv/
 .DS_Store
+
+# Formal verification tooling and Hypothesis database
+formal/tools/
+.hypothesis/
+
+# TLC trace-exploration artefacts
+formal/*_TTrace_*
+formal/states/
+
+# mutmut working directory
+mutants/
