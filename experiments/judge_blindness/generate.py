@@ -123,17 +123,17 @@ class Plan:
     picks: dict[str, int] = field(default_factory=dict)
 
 
-def session_id(seed: int, arm: str, index: int, variant: str = "") -> str:
+def session_id(seed: int, arm: str, index: int, variant: str = "", source: str = "") -> str:
     """Opaque identifier. Reveals neither the arm nor the index to a judge."""
-    key = f"{seed}:{arm}:{index}" + (f":{variant}" if variant else "")
+    key = f"{seed}:{arm}:{index}" + (f":{variant}" if variant else "") + (f":{source}" if source else "")
     digest = hashlib.sha1(key.encode()).hexdigest()
     return "s" + digest[:10]
 
 
-def _draw_plan(seed: int, index: int) -> Plan:
+def _draw_plan(seed: int, index: int, transition_override: str | None = None) -> Plan:
     rng = random.Random(f"judge-blindness:{seed}:{index}")
     vertical = rng.choice(bank.VERTICALS)
-    transition = rng.choice(TRANSITIONS)
+    transition = transition_override or rng.choice(TRANSITIONS)
     categories = rng.sample(list(bank.DISCOVERY), 2)
     # Corrections need a prior discovery answer to correct, so they are only
     # available once one has been recorded.
@@ -329,9 +329,10 @@ def _facts(f: Facts) -> dict[str, Any]:
 
 
 VARIANTS = ("", "deferred")
+STATE_SOURCES = ("model", "asyncio")
 
 
-def build_session(seed: int, arm: str, index: int, variant: str = "") -> dict[str, Any]:
+def build_session(seed: int, arm: str, index: int, variant: str = "", state_source: str = "model") -> dict[str, Any]:
     """Build one session.
 
     ``variant=""`` is the main design: the recovery utterance addresses the
@@ -348,7 +349,11 @@ def build_session(seed: int, arm: str, index: int, variant: str = "") -> dict[st
         raise ValueError(f"unknown arm: {arm!r}")
     if variant not in VARIANTS:
         raise ValueError(f"unknown variant: {variant!r}")
-    plan = _draw_plan(seed, index)
+    if state_source not in STATE_SOURCES:
+        raise ValueError(f"unknown state source: {state_source!r}")
+    # The asyncio reproduction models one speculative advance out of GREETING,
+    # so asyncio-sourced sessions are restricted to that transition.
+    plan = _draw_plan(seed, index, "GREETING->DISCOVERY" if state_source == "asyncio" else None)
     r = Renderer(plan)
     fixed = arm != "phantom"
     session = Session(
@@ -405,8 +410,26 @@ def build_session(seed: int, arm: str, index: int, variant: str = "") -> dict[st
                 kind = f"deferred:{kind}"
             caller, answers = _caller(expect, r, kind.split(":")[-1])
 
-        calls = [ToolCall("advance_phase", {"target": t}) for t in tools]
-        events = session.handle_turn(Turn(caller, interrupted=interrupted, answers_a_discovery_question=answers), calls)
+        if state_source == "asyncio" and interrupted:
+            # The injection turn's state transition comes from a real event
+            # loop rather than from the reference model: the vendored asyncio
+            # reproduction (interleaving_v2, from branch amir/science-v2) runs
+            # speculative generation, a spawned tool task and a barge-in
+            # through asyncio's own scheduler. Phantom arm: the barge-in lands
+            # after the effect, so even cancelling the tool with the reply
+            # leaves the phase advanced. Control arm: it lands before the
+            # effect and the cancellation works.
+            from judge_blindness.interleaving_v2 import Stage, reproduce
+
+            stage = Stage.AFTER_EFFECT if arm == "phantom" else Stage.AFTER_ISSUE_BEFORE_EFFECT
+            real = reproduce(stage, target=tools[-1].name, cancel_tool_with_reply=True)
+            session.phase = Phase[real.phase]
+            event_labels = list(real.events)
+            events = None
+        else:
+            calls = [ToolCall("advance_phase", {"target": t}) for t in tools]
+            events = session.handle_turn(Turn(caller, interrupted=interrupted, answers_a_discovery_question=answers), calls)
+            event_labels = [e.kind + (":" + e.detail if e.detail else "") for e in events]
 
         exchanges.append(
             Exchange(
@@ -431,7 +454,7 @@ def build_session(seed: int, arm: str, index: int, variant: str = "") -> dict[st
                 facts_after=_facts(session.facts),
                 interrupted=interrupted,
                 tool_calls=[t.name for t in tools],
-                events=[e.kind + (":" + e.detail if e.detail else "") for e in events],
+                events=event_labels,
             )
         )
         if interrupted:
@@ -448,11 +471,12 @@ def build_session(seed: int, arm: str, index: int, variant: str = "") -> dict[st
         raise RuntimeError(f"no injection point reached for {plan.transition} (index {index})")
 
     return {
-        "id": session_id(seed, arm, index, variant),
+        "id": session_id(seed, arm, index, variant, "" if state_source == "model" else state_source),
         "arm": arm,
         "index": index,
         "seed": seed,
         "variant": variant or "main",
+        "state_source": state_source,
         "transition": plan.transition,
         "interruption_type": plan.interruption_type,
         "injection_index": injected_at,
@@ -470,8 +494,10 @@ def build_session(seed: int, arm: str, index: int, variant: str = "") -> dict[st
     }
 
 
-def generate(seed: int, n: int, arms: tuple[str, ...] = ARMS, variant: str = "") -> list[dict[str, Any]]:
-    return [build_session(seed, arm, i, variant) for arm in arms for i in range(n)]
+def generate(
+    seed: int, n: int, arms: tuple[str, ...] = ARMS, variant: str = "", state_source: str = "model"
+) -> list[dict[str, Any]]:
+    return [build_session(seed, arm, i, variant, state_source) for arm in arms for i in range(n)]
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -481,8 +507,9 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--out", type=Path, default=Path("results/judge_blindness/sessions.jsonl"))
     p.add_argument("--arms", nargs="+", default=list(ARMS), choices=ARMS)
     p.add_argument("--variant", default="", choices=VARIANTS)
+    p.add_argument("--state-source", default="model", choices=STATE_SOURCES)
     args = p.parse_args(argv)
-    sessions = generate(args.seed, args.n, tuple(args.arms), args.variant)
+    sessions = generate(args.seed, args.n, tuple(args.arms), args.variant, args.state_source)
     args.out.parent.mkdir(parents=True, exist_ok=True)
     with args.out.open("w") as fh:
         for s in sessions:

@@ -143,3 +143,22 @@ def test_ingest_rejects_malformed_judgements(tmp_path):
     ]) + "\n")
     report = judge.ingest([bad], tmp_path / "out.jsonl", judge_name="fake")
     assert report["accepted"] == 0 and report["rejected"] == 3
+
+
+def test_asyncio_sourced_sessions_are_deterministic_and_detected():
+    """The asyncio-sourced sub-corpus: injection-turn state comes from a real
+    event loop (the vendored interleaving reproduction), and the post-condition
+    still detects every phantom and no control."""
+    a = generate.generate(SEED + 1, 4, ("phantom", "control"), state_source="asyncio")
+    b = generate.generate(SEED + 1, 4, ("phantom", "control"), state_source="asyncio")
+    assert json.dumps(a, sort_keys=True) == json.dumps(b, sort_keys=True)
+    for s in a:
+        assert s["state_source"] == "asyncio"
+        assert s["transition"] == "GREETING->DISCOVERY"
+        entry = s["trace"][s["injection_index"]]
+        assert any("vad: caller speech detected" in e for e in entry["events"])
+        assert any("tool tasks cancelled with the reply" in e for e in entry["events"])
+        r = postcondition.check(s)
+        assert r["phantom"] == (s["arm"] == "phantom")
+        if s["arm"] == "phantom":
+            assert any("has mutated the session state" in e for e in entry["events"])
