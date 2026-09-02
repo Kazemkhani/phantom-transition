@@ -35,7 +35,9 @@ def _rows(cells: Sequence[Cell]) -> list[tuple[str, str, dict[str, Cell]]]:
     return [(rt, ver, cfgs) for (rt, ver), cfgs in by_runtime.items()]
 
 
-def render_matrix_md(cells: Sequence[Cell], *, seed: int, n: int, commit: str) -> str:
+def render_matrix_md(
+    cells: Sequence[Cell], *, seed: int, n: int, commit: str, extra_notes: Sequence[str] = ()
+) -> str:
     cfg_names = [c.name for c in CONFIGS]
     lines = [
         "# Cross-framework matrix: does a state-mutating tool call survive a barge-in?",
@@ -51,12 +53,18 @@ def render_matrix_md(cells: Sequence[Cell], *, seed: int, n: int, commit: str) -
         "| Runtime | Version | " + " | ".join(cfg_names) + " |",
         "|---|---|" + "|".join("---" for _ in cfg_names) + "|",
     ]
+    prelude_notes = list(extra_notes)
     for rt, ver, cfgs in _rows(cells):
         row = [rt, ver]
         for name in cfg_names:
             cell = cfgs.get(name)
             row.append(_cell_text(cell) if cell is not None else "not measured")
         lines.append("| " + " | ".join(row) + " |")
+
+    if prelude_notes:
+        lines += [""]
+        for note in prelude_notes:
+            lines.append(note)
 
     lines += ["", "## Configurations", ""]
     for c in CONFIGS:

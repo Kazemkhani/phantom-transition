@@ -60,22 +60,6 @@ class Runtime:
     mechanism: dict[str, str] | None = None
 
 
-TEXT_MECH = {
-    "speculative": (
-        "the tool runs as its own asyncio task the instant it is emitted; the stop button "
-        "cancels the turn task only, so a mutation that happened, or happens later in a task "
-        "nobody cancelled, stands; a call not yet emitted when the stop lands is never made"
-    ),
-    "cancel-tool": (
-        "the stop button cancels the tool task as well; CancelledError is delivered at the "
-        "tool's next await, so a mutation before that await stands and one after it does not"
-    ),
-    "staged": (
-        "the tool writes to a staging slot and the turn commits it only on completing "
-        "un-stopped; a stopped turn discards the slot, whatever the timing"
-    ),
-}
-
 LK_171_MECH = (
     "agent_activity.py:3610-3630 (_pipeline_reply_task_impl): on interruption "
     "`await utils.aio.cancel_and_wait(exe_task)` (line 3611) cancels the tool dispatcher "
@@ -109,18 +93,12 @@ LK_1310_MECH = (
 
 
 def runtimes() -> list[Runtime]:
+    # The framework-free asyncio reproduction is measured separately
+    # (results/core-v2/asyncio-interleaving.txt, with a six-row interleaving
+    # survey); the text agent under experiments/frameworks/text_agent/ is the
+    # harness's CI substrate, exercised by tests/test_frameworks_harness.py,
+    # and is deliberately not a matrix row so the evidence is not duplicated.
     rts: list[Runtime] = []
-    for policy in ("speculative", "cancel-tool", "staged"):
-        rts.append(
-            Runtime(
-                key=f"text-agent-{policy}",
-                label=f"text-agent ({policy})",
-                python=sys.executable,
-                script="text_agent/run.py",
-                extra_args=("--policy", policy),
-                mechanism={c.name: TEXT_MECH[policy] for c in CONFIGS},
-            )
-        )
     rts.append(
         Runtime(
             key="livekit-1.7.1",
@@ -306,8 +284,14 @@ def assemble(*, seed: int, n: int, commit: str, started: str, finished: str) -> 
         envs.append((label, py, fr))
 
     os.makedirs(RESULTS, exist_ok=True)
+    notes = [
+        "The framework-free case (a plain asyncio agent with a stop button) is measured "
+        "separately in `results/core-v2/asyncio-interleaving.txt`: cancelling a task does "
+        "not cancel the tasks it spawned, and a barge-in after the tool's effect has landed "
+        "is a phantom transition even when the tool task is cancelled."
+    ]
     with open(os.path.join(RESULTS, "matrix.md"), "w", encoding="utf-8") as fh:
-        fh.write(render_matrix_md(cells, seed=seed, n=n, commit=commit))
+        fh.write(render_matrix_md(cells, seed=seed, n=n, commit=commit, extra_notes=notes))
     with open(os.path.join(RESULTS, "matrix.tex"), "w", encoding="utf-8") as fh:
         fh.write(render_matrix_tex(cells, seed=seed, n=n, commit=commit))
     machine = f"{platform.platform()} {platform.machine()}, {platform.python_implementation()}"
