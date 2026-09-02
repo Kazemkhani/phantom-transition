@@ -70,7 +70,7 @@ from dataclasses import dataclass, replace
 from typing import Any, Callable, Optional, Tuple
 from weakref import WeakKeyDictionary, WeakSet
 
-from .session import ENTRY_CONDITIONS, Facts, Phase, PhaseGuard
+from .session import Facts, Phase, PhaseGuard
 
 __all__ = [
     "Observation",
