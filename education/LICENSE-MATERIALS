@@ -1,0 +1,9 @@
+The teaching materials in this folder (the notebook prose, ANSWER-KEY.md and
+FACILITATOR-GUIDE.md) are released under the Creative Commons Attribution 4.0
+International licence (CC BY 4.0), https://creativecommons.org/licenses/by/4.0/.
+
+Attribution: Amir Hossein Kazemkhani, Nova Labs, Dubai, 2026.
+"Interrupted turns can still advance state", NeurIPS 2026 Education Track.
+
+The source code in this repository (src/, tests/, and the code cells of the
+notebook) remains under the MIT licence in the repository root LICENSE file.
