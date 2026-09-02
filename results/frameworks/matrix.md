@@ -1,6 +1,6 @@
 # Cross-framework matrix: does a state-mutating tool call survive a barge-in?
 
-Seed 20260902, N = 50 runs per cell, commit `154258fd42ad`. Every number below was produced by `python experiments/frameworks/run_matrix.py`; the raw per-run records are in `results/frameworks/raw/`.
+Seed 20260902, N = 50 runs per cell, commit `1b2c0655ab24`. Every number below was produced by `python experiments/frameworks/run_matrix.py`; the raw per-run records are in `results/frameworks/raw/`.
 
 Cell vocabulary: `committed` (the phase advanced on every run), `cancelled` (the phase never advanced), `race-dependent` (some runs committed, rate given), `not measured` (the reason is listed below the table; a blank is never a guess).
 
@@ -9,7 +9,6 @@ Cell vocabulary: `committed` (the phase advanced on every run), `cancelled` (the
 | LiveKit Agents (Python) | 1.7.1 | committed 50/50 | committed 50/50 | cancelled 50/50 | committed 50/50; barge-in suppressed 50/50 | committed 50/50; handoff applied 0/50 |
 | LiveKit Agents (Python) | 1.3.10 | committed 50/50 | committed 50/50 | cancelled 50/50 | committed 50/50; barge-in suppressed 50/50 | committed 50/50; handoff applied 0/50 |
 | Pipecat | 1.8.1 | committed 50/50 | cancelled 50/50 | cancelled 50/50 | committed 50/50 | not measured |
-| Pipecat 1.8.1 | 1.8.1 | not measured | not measured | not measured | not measured | not measured |
 | OpenAI Agents SDK (Python) | 0.22.0 | committed 50/50 | cancelled 50/50 | cancelled 50/50 | committed 50/50; barge-in suppressed 50/50 | committed 50/50; handoff applied 50/50 |
 
 The framework-free case (a plain asyncio agent with a stop button) is measured separately in `results/core-v2/asyncio-interleaving.txt`: cancelling a task does not cancel the tasks it spawned, and a barge-in after the tool's effect has landed is a phantom transition even when the tool task is cancelled.
@@ -38,6 +37,7 @@ The framework-free case (a plain asyncio agent with a stop button) is measured s
 - Pipecat 1.8.1, `inflight-tool`: InterruptionFrame is a system frame; every processor's base handler (processors/frame_processor.py:839-841) calls _start_interruption (1130-1150), which cancels that processor's in-flight process task, killing a streaming inference mid-turn; LLMService.process_frame (services/llm_service.py:688-689) then runs _handle_interruptions (758-761), cancelling every running function-call task whose cancel_on_interruption is True, the register_function default (936-942), via _cancel_function_call (2016-2020). Cancellation is CancelledError at the tool's next await: a mutation already made stands, one still beyond the await never happens. The per-tool opt-out, register_function(..., cancel_on_interruption=False), protects the call from cancellation but does not suppress the barge-in
 - Pipecat 1.8.1, `late-tool`: InterruptionFrame is a system frame; every processor's base handler (processors/frame_processor.py:839-841) calls _start_interruption (1130-1150), which cancels that processor's in-flight process task, killing a streaming inference mid-turn; LLMService.process_frame (services/llm_service.py:688-689) then runs _handle_interruptions (758-761), cancelling every running function-call task whose cancel_on_interruption is True, the register_function default (936-942), via _cancel_function_call (2016-2020). Cancellation is CancelledError at the tool's next await: a mutation already made stands, one still beyond the await never happens. The per-tool opt-out, register_function(..., cancel_on_interruption=False), protects the call from cancellation but does not suppress the barge-in
 - Pipecat 1.8.1, `disallow-interruptions`: InterruptionFrame is a system frame; every processor's base handler (processors/frame_processor.py:839-841) calls _start_interruption (1130-1150), which cancels that processor's in-flight process task, killing a streaming inference mid-turn; LLMService.process_frame (services/llm_service.py:688-689) then runs _handle_interruptions (758-761), cancelling every running function-call task whose cancel_on_interruption is True, the register_function default (936-942), via _cancel_function_call (2016-2020). Cancellation is CancelledError at the tool's next await: a mutation already made stands, one still beyond the await never happens. The per-tool opt-out, register_function(..., cancel_on_interruption=False), protects the call from cancellation but does not suppress the barge-in
+- Pipecat 1.8.1, `inflight-tool (cancel_on_interruption=False)`: side measurement: the per-tool opt-out register_function(..., cancel_on_interruption=False) at in-flight timing converts the cancelled cell into a committed phantom; barge-in is not suppressed
 - OpenAI Agents SDK (Python) 0.22.0, `sync-tool`: tool execution is turn-atomic: the runner executes a turn's tool calls only after that turn's model stream completes (run_internal/turn_resolution.py:784 execute_tools_and_side_effects -> run_internal/tool_execution.py:2308 execute_function_tool_calls). RunResultStreaming.cancel (result.py:818) with mode=immediate calls _cleanup_tasks (result.py:849), cancelling the run task: a stop mid-stream forecloses calls emitted in that stream, a stop during tool execution delivers CancelledError at the tool's next await, and a stop during the following reply turn rolls nothing back. mode=after_turn (documented: allows the LLM response to finish and executes pending tool calls) completes the whole turn, so the reply plays to the end and the mutation commits
 - OpenAI Agents SDK (Python) 0.22.0, `inflight-tool`: tool execution is turn-atomic: the runner executes a turn's tool calls only after that turn's model stream completes (run_internal/turn_resolution.py:784 execute_tools_and_side_effects -> run_internal/tool_execution.py:2308 execute_function_tool_calls). RunResultStreaming.cancel (result.py:818) with mode=immediate calls _cleanup_tasks (result.py:849), cancelling the run task: a stop mid-stream forecloses calls emitted in that stream, a stop during tool execution delivers CancelledError at the tool's next await, and a stop during the following reply turn rolls nothing back. mode=after_turn (documented: allows the LLM response to finish and executes pending tool calls) completes the whole turn, so the reply plays to the end and the mutation commits
 - OpenAI Agents SDK (Python) 0.22.0, `late-tool`: tool execution is turn-atomic: the runner executes a turn's tool calls only after that turn's model stream completes (run_internal/turn_resolution.py:784 execute_tools_and_side_effects -> run_internal/tool_execution.py:2308 execute_function_tool_calls). RunResultStreaming.cancel (result.py:818) with mode=immediate calls _cleanup_tasks (result.py:849), cancelling the run task: a stop mid-stream forecloses calls emitted in that stream, a stop during tool execution delivers CancelledError at the tool's next await, and a stop during the following reply turn rolls nothing back. mode=after_turn (documented: allows the LLM response to finish and executes pending tool calls) completes the whole turn, so the reply plays to the end and the mutation commits
@@ -46,7 +46,7 @@ The framework-free case (a plain asyncio agent with a stop button) is measured s
 
 ## Not measured
 
-- Pipecat 1.8.1 1.8.1, `handoff-tool`: core Pipecat has no agent-handoff primitive
+- Pipecat 1.8.1, `handoff-tool`: core Pipecat has no agent-handoff primitive
 
 ## Per-cell detail
 
@@ -66,6 +66,7 @@ The framework-free case (a plain asyncio agent with a stop button) is measured s
 | Pipecat | 1.8.1 | inflight-tool | 50 | 0 | 50 | 0 | 0 | 0 | n/a |
 | Pipecat | 1.8.1 | late-tool | 50 | 0 | 50 | 0 | 0 | 0 | n/a |
 | Pipecat | 1.8.1 | disallow-interruptions | 50 | 50 | 0 | 50 | 50 | 0 | n/a |
+| Pipecat | 1.8.1 | inflight-tool (cancel_on_interruption=False) | 50 | 50 | 0 | 50 | 50 | 0 | n/a |
 | OpenAI Agents SDK (Python) | 0.22.0 | sync-tool | 50 | 50 | 0 | 50 | 50 | 0 | n/a |
 | OpenAI Agents SDK (Python) | 0.22.0 | inflight-tool | 50 | 0 | 50 | 0 | 0 | 0 | n/a |
 | OpenAI Agents SDK (Python) | 0.22.0 | late-tool | 50 | 0 | 50 | 0 | 0 | 0 | n/a |

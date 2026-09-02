@@ -2,7 +2,7 @@
   "command": null,
   "config": "handoff-tool",
   "reason": "core Pipecat has no agent-handoff primitive",
-  "runtime": "Pipecat 1.8.1",
+  "runtime": "Pipecat",
   "runtime_version": "1.8.1",
   "verdict": "not measured"
 }

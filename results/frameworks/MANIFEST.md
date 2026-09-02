@@ -1,11 +1,11 @@
 # MANIFEST: cross-framework matrix
 
-- Repository commit: `154258fd42ad`
+- Repository commit: `1b2c0655ab24`
 - Seed: `20260902`
 - N per cell: `50`
 - Machine: macOS-26.3-arm64-arm-64bit arm64, CPython
-- Started: 2026-09-02T07:49:40+00:00
-- Finished: 2026-09-02T07:59:50+00:00
+- Started: 2026-09-02T12:47:53+00:00
+- Finished: 2026-09-02T12:47:53+00:00
 
 ## Commands
 
@@ -23,6 +23,7 @@
     experiments/frameworks/pipecat/.venv/bin/python experiments/frameworks/pipecat/run.py --config inflight-tool --n 50 --seed 20260902 --out results/frameworks/raw/pipecat-inflight-tool.jsonl
     experiments/frameworks/pipecat/.venv/bin/python experiments/frameworks/pipecat/run.py --config late-tool --n 50 --seed 20260902 --out results/frameworks/raw/pipecat-late-tool.jsonl
     experiments/frameworks/pipecat/.venv/bin/python experiments/frameworks/pipecat/run.py --config disallow-interruptions --n 50 --seed 20260902 --out results/frameworks/raw/pipecat-disallow-interruptions.jsonl
+    experiments/frameworks/pipecat/.venv/bin/python experiments/frameworks/pipecat/run.py --config inflight-tool --optout --n 50 --seed 20260902 --out results/frameworks/raw/pipecat-inflight-optout.jsonl
     experiments/frameworks/openai_agents/.venv/bin/python experiments/frameworks/openai_agents/run.py --config sync-tool --n 50 --seed 20260902 --out results/frameworks/raw/openai-agents-sync-tool.jsonl
     experiments/frameworks/openai_agents/.venv/bin/python experiments/frameworks/openai_agents/run.py --config inflight-tool --n 50 --seed 20260902 --out results/frameworks/raw/openai-agents-inflight-tool.jsonl
     experiments/frameworks/openai_agents/.venv/bin/python experiments/frameworks/openai_agents/run.py --config late-tool --n 50 --seed 20260902 --out results/frameworks/raw/openai-agents-late-tool.jsonl

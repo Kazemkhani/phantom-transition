@@ -216,7 +216,10 @@ def run_cell(rt: Runtime, config_name: str, *, n: int, seed: int) -> dict:
             f"cell process exited {proc.returncode}; last stderr lines: "
             + " | ".join(proc.stderr.strip().splitlines()[-5:])
         )
-        cell = NotMeasured(rt.label, rt.version_hint, config_name, reason)
+        # Normalise the label exactly as the success branch does below, or a
+        # not-measured cell becomes a second, phantom runtime in the table.
+        label = rt.label.rsplit(" ", 1)[0] if rt.version_hint else rt.label
+        cell = NotMeasured(label, rt.version_hint, config_name, reason)
         out = {**cell.to_dict(), "command": printable, "started": started, "finished": finished}
     else:
         d = json.loads(proc.stdout.strip().splitlines()[-1])
