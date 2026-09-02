@@ -10,50 +10,67 @@ imported, tested and read on a machine with no LiveKit installed. (Absolute
 imports are the default in Python 3, so `from livekit.agents import ...` inside
 this file resolves to the installed top-level package and never to this module.)
 
-What the adapter does, and what it does not
--------------------------------------------
-It refuses a phase transition on three grounds, in this order:
+Where the decision goes
+-----------------------
+The adapter refuses a phase transition on three grounds:
 
 1. the speech handle carrying the tool call was already interrupted;
 2. the transition is not the next legal one from the current phase;
 3. the destination phase's entry conditions are not satisfied by the facts.
 
-Only the third of those is a guarantee. The first is a race, in exactly the way
-the framework's own `await utils.aio.cancel_and_wait(exe_task)` is a race
-(`livekit/agents/voice/agent_activity.py:3611` in 1.7.1): a tool that finished
-before cancellation reached it is committed regardless, and the comment above
-that call says so. A tool body that mutates state synchronously will almost
-always have finished.
+What matters more than the grounds is *when* the third one is asked. By default
+the adapter does not decide inside the tool call at all. It stages the
+transition against the speech handle that proposed it and decides when that
+handle completes, in the same callback that writes the turn's facts, facts
+first.
 
-The guarantee is in the facts. `FactsRecorder` writes `greeting_delivered` and
-`pitch_delivered` only when a speech handle completes with
-`SpeechHandle.interrupted` False (`speech_handle.py:108-110`). A turn that was
-thrown away therefore leaves no evidence behind, so no later transition can
-cite it. Timing decides *when* a legitimate transition is admitted. It cannot
-decide *whether* an unearned one is.
+That is not a stylistic choice. Deciding inside the tool call is a race, in
+exactly the way the framework's own `await utils.aio.cancel_and_wait(exe_task)`
+is a race (`voice/agent_activity.py:3611`, whose comment two lines later says
+the results of tools that finished are committed anyway). Cancellation closes
+the window only while the tool is suspended, and a synchronous phase mutation
+between two awaits is never suspended, so it is a race that has to be won every
+single time. The survey in `results/core-v2/asyncio-interleaving.txt` of the
+research repository measures it: a barge-in landing after the tool's effect has
+landed is a phantom transition whether or not the tool is cancelled.
 
-The honest limit of that, stated so nobody has to find it later: a transition
-whose evidence *does* exist can still commit on a turn the caller interrupted,
-if the interrupt has not landed by the time the tool runs. What it cannot do is
-go any further. That turn wrote no facts either, so the gate on the next phase
-is still shut. A phantom transition under this adapter is bounded to one step,
-into a phase that was already earned, and it cannot cascade.
+Deciding at completion asks a settled question instead. `SpeechHandle.interrupted`
+read inside a done callback is final, because `interrupt()` returns early on a
+handle that is already done (`speech_handle.py:195-197`). There is no window
+left to lose.
 
-That is the difference between admission and rollback, and it is why this
-adapter does not try to undo a transition after the fact. See
+It is also cheaper, not dearer. A transition whose entry condition is
+established by its own turn, such as the greeting that licenses DISCOVERY, is
+refused by an issue-time check and admitted by a completion-time one, because
+the turn's facts are written first. The same repository's enumeration over all
+9,834,496 four-turn sequences reports the issue-time design refusing 19.19% of
+warranted transitions and violating the interruption invariant 80 times, and
+the completion-time design doing neither.
+
+`guarded_transition(..., commit="issue")` keeps the racy design available so
+the two can be compared. It is not the one to use.
+
+Underneath both sits the property that does not depend on timing at all: the
+facts. `FactsRecorder` writes `greeting_delivered` and `pitch_delivered` only
+when a speech handle completes with `SpeechHandle.interrupted` False
+(`speech_handle.py:108-110`), so a turn that was thrown away leaves no evidence
+behind for a later transition to cite, and a phantom transition cannot cascade.
+
+This is why the adapter does not try to undo a transition after the fact. See
 `examples/livekit_guarded_agent.py` for why the rollback shape cannot be built
 out of `FunctionToolsExecutedEvent.cancel_agent_handoff()` at all.
 """
 
 from __future__ import annotations
 
+import dataclasses
 import functools
 import inspect
 from dataclasses import dataclass, replace
 from typing import Any, Callable, Optional, Tuple
-from weakref import WeakKeyDictionary
+from weakref import WeakKeyDictionary, WeakSet
 
-from .session import Facts, Phase, PhaseGuard
+from .session import ENTRY_CONDITIONS, Facts, Phase, PhaseGuard
 
 __all__ = [
     "Observation",
@@ -63,6 +80,7 @@ __all__ = [
     "recorder_for",
     "default_refusal",
     "livekit_agents_version",
+    "permissive_facts",
     "SESSION_EVENTS",
 ]
 
@@ -100,6 +118,29 @@ def _legal_event_names() -> Optional[frozenset]:
     except Exception:
         return None
     return frozenset(get_args(EventTypes))
+
+
+def permissive_facts() -> Facts:
+    """The facts record that satisfies every entry condition there is.
+
+    Used to ask a question the guard does not otherwise answer: *could any facts
+    record admit this transition?* If not, the refusal is structural (a skip, a
+    backward move, a target that is not a phase) and completing the turn cannot
+    change it, so the model is told at once. If so, the only remaining objection
+    is evidential, and evidence is exactly what the rest of the turn may still
+    produce.
+
+    Derived from the dataclass rather than written out, so a new field on
+    `Facts` does not silently make this record less than maximal.
+    `test_the_permissive_record_satisfies_every_entry_condition` is the check.
+    """
+    values = {}
+    for field in dataclasses.fields(Facts):
+        if isinstance(field.default, bool):
+            values[field.name] = True
+        elif isinstance(field.default, int):
+            values[field.name] = 2**31
+    return Facts(**values)
 
 
 # -- what the recorder saw -------------------------------------------------
@@ -154,6 +195,11 @@ class FactsRecorder:
     A speech is credited to the phase it was *created* in, not the phase the
     session happens to be in when it finishes, so a transition admitted mid-turn
     cannot re-attribute the speech that preceded it.
+
+    The recorder also owns the commit point. A transition staged by
+    `guarded_transition` is held against the speech handle that proposed it and
+    resolved when that handle completes, in the same callback that writes the
+    turn's facts, in that order. See `stage`.
     """
 
     def __init__(
@@ -169,6 +215,8 @@ class FactsRecorder:
         self._observations: list = []
         self._session: Any = None
         self._subscriptions: list = []
+        self._hooked: Any = WeakSet()
+        self._staged: Any = WeakKeyDictionary()
 
     # -- read-only state ---------------------------------------------------
     @property
@@ -253,6 +301,54 @@ class FactsRecorder:
         """Ask the guard whether `target` is admissible now. Pure; commits nothing."""
         return self._guard.check(self._phase, target, self._facts)
 
+    def check_structurally(self, target: Any) -> Tuple[bool, str]:
+        """Ask whether *any* facts record could admit `target` from here.
+
+        False means the objection is to the shape of the move, not to the
+        evidence, so no amount of turn left to run can answer it.
+        """
+        return self._guard.check(self._phase, target, permissive_facts())
+
+    def stage(self, handle: Any, target: Any) -> None:
+        """Hold `target` against `handle`, to be resolved when the turn completes.
+
+        This is the commit point, and it is the whole reason the adapter is not
+        a race. `SpeechHandle.interrupted` read inside a done callback is final:
+        `interrupt()` returns early on a handle that is already done
+        (`speech_handle.py:195-197`), so a handle cannot become interrupted
+        after its callbacks have run. Deciding there asks a settled question
+        instead of a timing one.
+
+        Resolving at completion is also what makes the guard free. A transition
+        whose entry condition is established by its own turn (the greeting that
+        licenses DISCOVERY is the obvious one) is refused by an issue-time
+        check and admitted by this one, because the turn's facts are written
+        first.
+        """
+        if getattr(handle, "done", None) is not None and handle.done():
+            # Nothing left to wait for. The facts for this turn are already
+            # written, so the question can be answered now.
+            self._resolve(handle, target)
+            return
+        self._ensure_hooked(handle, self._phase)
+        self._staged[handle] = target
+
+    def staged_for(self, handle: Any) -> Any:
+        """The transition waiting on `handle`, or None."""
+        return self._staged.get(handle)
+
+    def _resolve(self, handle: Any, target: Any) -> None:
+        if getattr(handle, "interrupted", False):
+            self._observations.append(
+                Observation(
+                    "transition_dropped",
+                    "the turn that proposed it was interrupted",
+                    self._phase,
+                )
+            )
+            return
+        self.admit(target)
+
     def admit(self, target: Any) -> Tuple[bool, str]:
         """Re-check and, if allowed, commit the transition. The only phase writer."""
         allowed, reason = self.check(target)
@@ -272,12 +368,31 @@ class FactsRecorder:
         handle = getattr(event, "speech_handle", None)
         if handle is None or not hasattr(handle, "add_done_callback"):
             return
-        phase_at_creation = self._phase
+        self._ensure_hooked(handle, self._phase)
+
+    def _ensure_hooked(self, handle: Any, phase: Phase) -> None:
+        """Register exactly one done callback on `handle`.
+
+        One, not two, because `SpeechHandle._done_callbacks` is a `set`
+        (`speech_handle.py:58`) iterated as `list(self._done_callbacks)`
+        (`:61`), so two callbacks would run in an order nothing defines. The
+        turn's facts must be written before a staged transition is judged
+        against them, so both happen in one callback, in that order.
+        """
+        if handle in self._hooked:
+            return
+        self._hooked.add(handle)
 
         def _finished(finished_handle: Any) -> None:
-            self._agent_speech_finished(finished_handle, phase_at_creation)
+            self._turn_finished(finished_handle, phase)
 
         handle.add_done_callback(_finished)
+
+    def _turn_finished(self, handle: Any, phase: Phase) -> None:
+        self._agent_speech_finished(handle, phase)
+        target = self._staged.pop(handle, None)
+        if target is not None:
+            self._resolve(handle, target)
 
     def _agent_speech_finished(self, handle: Any, phase: Phase) -> None:
         if getattr(handle, "interrupted", False):
@@ -389,6 +504,7 @@ def _before(
     kwargs: dict,
     recorder: Optional[FactsRecorder],
     refusal: Callable[[Phase, Any, str], str],
+    commit: str,
 ) -> Tuple[Optional[FactsRecorder], Any, Optional[str]]:
     """Everything checked before the wrapped body runs.
 
@@ -417,7 +533,11 @@ def _before(
             found.phase, target, "the turn that proposed this transition was interrupted"
         )
 
-    allowed, reason = found.check(target)
+    # At completion the evidential question is not asked yet: the turn's own act
+    # may still establish it. Only the structural objections are answered now,
+    # because no amount of turn left to run can answer those.
+    check = found.check_structurally if commit == "completion" else found.check
+    allowed, reason = check(target)
     if not allowed:
         return found, context, refusal(found.phase, target, reason)
 
@@ -429,8 +549,15 @@ def _after(
     context: Any,
     target: Any,
     refusal: Callable[[Phase, Any, str], str],
+    commit: str,
 ) -> Optional[str]:
-    """Everything checked after the body returns, before the transition commits."""
+    """The commit, once the body has returned."""
+    if commit == "completion":
+        found.stage(getattr(context, "speech_handle", None), target)
+        return None
+
+    # commit == "issue": decide now, and re-read the interruption flag first.
+    # This is the racy design, kept so it can be demonstrated and compared.
     if _interrupted(context):
         return refusal(
             found.phase,
@@ -448,6 +575,7 @@ def guarded_transition(
     *,
     recorder: Optional[FactsRecorder] = None,
     refusal: Optional[Callable[[Phase, Any, str], str]] = None,
+    commit: str = "completion",
 ):
     """Gate a phase-advance function tool on turn completion and recorded facts.
 
@@ -458,11 +586,8 @@ def guarded_transition(
         async def move_to_discovery(context: RunContext) -> str:
             return "Thanks. What brought you in today?"
 
-    The wrapped body runs only if the transition is admissible. It must not
-    write the phase itself: the adapter commits it, after the body returns and
-    after one final interruption check, so that a barge-in landing while the
-    body ran still leaves the phase where it was. A body that mutated the phase
-    would reopen exactly that window.
+    The wrapped body runs only if the transition is structurally possible. It
+    must not write the phase itself: the adapter owns the commit.
 
     On refusal the body does not run and the tool returns a spoken string, so
     the model can recover and keep talking. Nothing raises.
@@ -482,7 +607,25 @@ def guarded_transition(
             `context.session` is used, which is what `guard_session` registered.
         refusal: override the spoken refusal text. Called with
             `(current_phase, target, reason)`.
+        commit: where the transition is decided.
+
+            `"completion"` (the default) stages it against the speech handle
+            that proposed it and decides when that handle completes, after the
+            turn's facts have been written. `SpeechHandle.interrupted` is final
+            by then, because `interrupt()` returns early on a handle that is
+            already done (`speech_handle.py:195-197`), so there is no race left
+            to lose. A transition whose entry condition is established by its
+            own turn is admitted rather than refused.
+
+            `"issue"` decides inside the tool call, re-reading the interruption
+            flag immediately before it writes the phase. That check is a race in
+            exactly the way the framework's own `cancel_and_wait` is a race, and
+            it refuses transitions whose evidence the turn was about to
+            establish. It is kept so the two can be compared, not because it is
+            the one to use.
     """
+    if commit not in ("completion", "issue"):
+        raise ValueError("commit must be 'completion' or 'issue', not " + repr(commit))
     say_no = refusal if refusal is not None else default_refusal
 
     def decorate(func):
@@ -490,11 +633,13 @@ def guarded_transition(
 
             @functools.wraps(func)
             async def guarded_async(*args, **kwargs):
-                found, context, denial = _before(target, args, kwargs, recorder, say_no)
+                found, context, denial = _before(
+                    target, args, kwargs, recorder, say_no, commit
+                )
                 if denial is not None:
                     return denial
                 result = await func(*args, **kwargs)
-                denial = _after(found, context, target, say_no)
+                denial = _after(found, context, target, say_no, commit)
                 if denial is not None:
                     return denial
                 return result
@@ -503,11 +648,13 @@ def guarded_transition(
 
         @functools.wraps(func)
         def guarded_sync(*args, **kwargs):
-            found, context, denial = _before(target, args, kwargs, recorder, say_no)
+            found, context, denial = _before(
+                target, args, kwargs, recorder, say_no, commit
+            )
             if denial is not None:
                 return denial
             result = func(*args, **kwargs)
-            denial = _after(found, context, target, say_no)
+            denial = _after(found, context, target, say_no, commit)
             if denial is not None:
                 return denial
             return result

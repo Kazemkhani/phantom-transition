@@ -13,11 +13,11 @@ A minimal reproduction, and fix, for a failure mode in phase-gated multi-agent v
 pip install -e ".[dev]" && pytest -v
 ```
 
-70 tests. No dependencies beyond pytest. The LiveKit adapter is an optional
+67 tests. No dependencies beyond pytest. The LiveKit adapter is an optional
 extra: the core package imports nothing outside the standard library, and its
 tests run with fakes and no LiveKit installed.
 
-**Contents** &nbsp;·&nbsp; [The fault](#the-fault) &nbsp;·&nbsp; [Why it matters beyond voice](#why-it-matters-beyond-voice) &nbsp;·&nbsp; [The three fixes](#the-three-fixes) &nbsp;·&nbsp; [The guard](#the-guard) &nbsp;·&nbsp; [The twelve guard tests](#the-twelve-guard-tests) &nbsp;·&nbsp; [Adopting the guard in LiveKit Agents](#adopting-the-guard-in-livekit-agents) &nbsp;·&nbsp; [The same fault with no voice at all](#the-same-fault-with-no-voice-at-all) &nbsp;·&nbsp; [What this is not](#what-this-is-not)
+**Contents** &nbsp;·&nbsp; [The fault](#the-fault) &nbsp;·&nbsp; [Why it matters beyond voice](#why-it-matters-beyond-voice) &nbsp;·&nbsp; [The three fixes](#the-three-fixes) &nbsp;·&nbsp; [The guard](#the-guard) &nbsp;·&nbsp; [The twelve guard tests](#the-twelve-guard-tests) &nbsp;·&nbsp; [Adopting the guard in LiveKit Agents](#adopting-the-guard-in-livekit-agents) &nbsp;·&nbsp; [What this is not](#what-this-is-not)
 
 ---
 
@@ -245,9 +245,11 @@ async def move_to_discovery(context: RunContext) -> str:  # 4
 
 Line 1 attaches a `FactsRecorder` to the session. It subscribes to `speech_created` and `user_input_transcribed` and writes the guard's facts from what it observes: a greeting counts as delivered when the speech handle that carried it completes with `SpeechHandle.interrupted` False, and a discovery answer counts when a user turn completes. It never reads `UserInputTranscribedEvent.transcript`. The utterance is not one of the guard's inputs at any point in the chain.
 
+The recorder also owns the commit point, and that is the part that matters. The transition does not commit inside the tool call. It is staged against the speech handle that proposed it and committed when that handle completes, in the same callback that writes the turn's facts, facts first.
+
 Lines 2 to 5 are an ordinary function tool with one decorator added. `@guarded_transition` goes **under** `@function_tool()`, closest to the function; above it, `function_tool` would build the tool's name, description and schema from the wrong callable.
 
-The decorated tool refuses on three grounds and returns a spoken string rather than raising, so the model keeps its turn and can recover:
+The decorated tool refuses on three grounds and returns a spoken string rather than raising, so the model keeps its turn and can recover. The first two are answered inside the tool call, because no amount of turn left to run can make a phase skip legal. The third is answered at the end of the turn, because the turn's own act may be what establishes the evidence:
 
 | Refusal | Reason the model is given |
 | --- | --- |
@@ -259,6 +261,40 @@ A fourth refusal covers the failure that motivated the whole library: if no `Fac
 
 Every LiveKit API name above was read out of an installed `livekit-agents` 1.7.1, not written from memory. The adapter imports `livekit.agents` lazily, inside functions, so the core package stays dependency-free and the adapter's tests run against fakes with no server, no room and no model.
 
+### Where the decision goes
+
+Cancellation is not an alternative to this, and the reason is measured rather than argued.
+
+The framework already cancels an in-flight tool call when the turn is interrupted, correctly, at `agent_activity.py:3611`:
+
+```python
+await utils.aio.cancel_and_wait(exe_task)
+```
+
+The comment two lines below it says what happens next: the results of the tools that finished are committed anyway, so the next inference does not run them again. **Cancellation closes the window only while the tool is suspended.** A phase-advance tool mutates state synchronously between two awaits and is never suspended, so cancellation is a race that has to be won every single time.
+
+The sibling asyncio reproduction measures it rather than arguing it. Three windows, each with and without cancellation (`python -m phantom_transition.interleaving`, [pull request #2](https://github.com/Kazemkhani/phantom-transition/pull/2)):
+
+| barge-in lands | tool cancelled | phantom transition |
+| --- | --- | --- |
+| before the call is issued | either | no |
+| after the call is issued, before its effect lands | no | **yes** |
+| after the call is issued, before its effect lands | yes | no |
+| after the effect has landed | no | **yes** |
+| after the effect has landed | yes | **yes** |
+
+The last row is the one a synchronous state mutation always produces, and it is the row cancellation cannot reach.
+
+So the adapter does not race. `SpeechHandle.interrupted` read inside a done callback is final, because `interrupt()` returns early on a handle that is already done (`speech_handle.py:195-197`). The question asked at the commit point is settled rather than in flight.
+
+Deferring is also cheaper than deciding early, which is the opposite of what a safety check usually costs. A transition whose entry condition is established by its own turn, such as the greeting that licenses `DISCOVERY`, is refused by an issue-time check and admitted by this one. The same enumeration over all 9,834,496 four-turn sequences reports the issue-time design refusing 19.19% of warranted transitions and violating the interruption invariant 80 times, against zero and zero for the completion-time design.
+
+`guarded_transition(..., commit="issue")` keeps the early design available so the two can be compared. It is not the one to deploy.
+
+Underneath both sits the property that does not depend on timing at all: an interrupted speech writes no fact, so a turn that was thrown away leaves no evidence behind for a later transition to cite, and a phantom transition cannot cascade.
+
+That is the difference between admission and rollback, and it is why the adapter does not try to undo a transition after the fact. `examples/livekit_guarded_agent.py` closes with a worked case: a production deployment that wrote the cancel-on-interrupt correction, using the correct APIs, and could never have fired it, for two independent reasons.
+
 ### On `context.disallow_interruptions()`
 
 > [!NOTE]
@@ -268,45 +304,18 @@ It is not this one, for three reasons.
 
 1. **It spends barge-in to buy state safety, on every transition, for every caller.** In a real-time call that is a naturalness and latency cost the caller can hear.
 2. **It is a discretionary per-tool opt-in.** It protects the tools someone remembered to annotate, and does not survive the next tool being added by someone who did not read the comment above it.
-3. **It answers a different question.** It prevents cancellation *during execution*. It says nothing about whether the destination phase's entry evidence was ever recorded, and it raises `RuntimeError` if the handle is already interrupted, which is the case that started all this.
+3. **It answers a different question.** It stops the turn being invalidated while the tool runs. It says nothing about whether the destination phase's entry evidence was ever recorded, so a transition to a phase the caller never earned is still admitted, and it raises `RuntimeError` if the handle is already interrupted, which is the case that started all this.
+
+To be precise about what it does buy, given the table above: `disallow_interruptions` is strictly stronger than cancellation, because cancellation only reaches a tool that is still suspended whereas this stops the interruption landing at all. That is exactly why it costs what it costs. It is the one setting that closes the last row of that table, and it closes it by taking barge-in away for the duration of every transition.
 
 The two compose, and there is every reason to use both on a tool that also charges a card. `guarded_transition` decides admission; whether the turn may be interrupted while the body runs is a separate choice.
-
-### What the adapter guarantees, and what it does not
-
-The interruption checks are races, in exactly the way the framework's own cancellation is a race: a tool that finished before cancellation reached it is committed regardless, and a synchronous state mutation with no `await` point in it almost always will have.
-
-What is not a race is the facts record. An interrupted speech writes no fact, so a turn that was thrown away leaves no evidence behind for a later transition to cite. A phase whose entry evidence was never recorded cannot be entered, whatever the timing does, and a transition that does slip through on an interrupted turn cannot cascade, because that turn recorded nothing for the next gate either.
-
-That is the difference between admission and rollback, and it is why the adapter does not try to undo a transition after the fact. `examples/livekit_guarded_agent.py` closes with a worked case: a production deployment that wrote the cancel-on-interrupt correction, using the correct APIs, and could never have fired it, for two independent reasons.
-
-## The same fault with no voice at all
-
-```
-python examples/text_agent_stop_button.py
-```
-
-A text agent with a stop button, in standard-library `asyncio`. The model emits a tool call and starts streaming; the runtime dispatches the call rather than holding it until the reply is finished; the user presses stop; the partial reply is wiped and the tool task is cancelled the way a runtime cancels it. The task had already finished.
-
-There is no barge-in in it, no audio, no turn detector and no endpointing. A test parses the example's own imports and fails if anyone ever adds one.
-
-The example keeps the two fixes on separate switches, because they close different things:
-
-| | stop lands **before** the greeting was delivered | stop lands **after**, on an earned transition |
-| --- | --- | --- |
-| unguarded | `DISCOVERY` | `DISCOVERY` |
-| refuse on a pressed stop | `DISCOVERY` | `GREETING` |
-| facts check | `GREETING` | `DISCOVERY` |
-| both | `GREETING` | `GREETING` |
-
-The stop check loses the race in the left column, where the stop lands after the tool has already run. The facts check has no race in it: `DISCOVERY` needs a delivered greeting, and a discarded turn does not deliver one. It admits the right column because the greeting genuinely was delivered on an earlier, completed turn, which is the honest limit of what a precondition over recorded facts can do.
 
 ## What this is not
 
 > [!NOTE]
 > This is a standalone reproduction written to isolate one fault, not the production system it was found in. It carries no LiveKit, no model provider and no audio, because none of those are necessary to demonstrate the mechanism, and including them would make the failure harder to see rather than easier.
 
-The production system this came from is a bilingual voice agent for qualification calls. The guard here is a design extracted from a fault found in it, not code that runs in it: that system has no fact-based guard on its phase transitions, and the interruption-cancellation hook it does carry has never fired. `examples/livekit_guarded_agent.py` describes that hook, anonymised, and the two independent reasons it could not have.
+The guard is a design extracted from a fault found in a production voice agent for outbound qualification calls; it is not a description of code that runs there today. That system's own interruption-cancellation hook was wired but never triggered, which is part of why the fault is worth a standalone reproduction. `examples/livekit_guarded_agent.py` reproduces that hook, anonymised, alongside the two independent reasons it could never have fired.
 
 ## Licence
 

@@ -25,9 +25,15 @@ The five lines
         return "Thanks. What brought you in today?"           # 5
 
 Line 1 attaches a `FactsRecorder` to the session. It subscribes to
-`speech_created` and `user_input_transcribed` and writes the guard's facts from
-what it observes. Lines 2 to 5 are an ordinary function tool with one extra
-decorator between `@function_tool()` and the function.
+`speech_created` and `user_input_transcribed`, writes the guard's facts from
+what it observes, and owns the commit point. Lines 2 to 5 are an ordinary
+function tool with one extra decorator between `@function_tool()` and the
+function.
+
+The transition does not commit inside the tool call. It is staged against the
+speech handle that proposed it and committed when that handle completes, after
+the turn's facts have been written. That is what makes the adapter a
+precondition rather than a race; see the closing section of this file.
 
 `@guarded_transition` goes *under* `@function_tool()`, closest to the function.
 Above it, `function_tool` would be handed a `FunctionTool` object rather than
@@ -56,10 +62,9 @@ from phantom_transition.livekit import guard_session, guarded_transition, record
 # -----------------------------------------------------------------------------
 #
 # Each one advances one phase. The body says what the agent should say next and
-# nothing else: it must not write the phase, because the adapter commits that
-# after the body returns and after one last check that the turn was not
-# interrupted while the body ran. A body that moved the phase itself would
-# reopen exactly the window the guard closes.
+# nothing else: it must not write the phase, because the adapter owns the
+# commit and defers it to the end of the turn. A body that moved the phase
+# itself would reopen exactly the window the guard closes.
 
 
 class QualificationAgent(Agent):
@@ -213,6 +218,49 @@ if __name__ == "__main__":
 # transition tool. What you get: a transition can be proposed by anything at
 # all, at any moment in the turn, and still cannot commit unless the facts for
 # its destination were written by an event that actually happened.
+#
+# -----------------------------------------------------------------------------
+# Why the commit is deferred, and why cancellation is not an alternative
+# -----------------------------------------------------------------------------
+#
+# The obvious repair for the hook above is to cancel the tool call when the turn
+# is interrupted. The framework already does that, correctly, at
+# `agent_activity.py:3611`:
+#
+#     await utils.aio.cancel_and_wait(exe_task)
+#
+# and the comment two lines below it says what happens next: the results of the
+# tools that finished are committed anyway, so the next inference does not run
+# them again. Cancellation closes the window only while the tool is *suspended*.
+# A phase-advance tool mutates state synchronously between two awaits and is
+# never suspended, so cancellation is a race that has to be won every single
+# time, and it is not the framework's fault: it is deliberate, documented
+# behaviour.
+#
+# The survey in `results/core-v2/asyncio-interleaving.txt` of the research
+# repository measures the three cases. A barge-in landing before the call is
+# issued is harmless with or without cancellation. A barge-in landing after the
+# call is issued but before its effect lands is closed by cancellation. A
+# barge-in landing after the effect has landed is a phantom transition whether
+# or not the tool is cancelled. The third row is the one a synchronous state
+# mutation always produces.
+#
+# So the adapter does not race. `guarded_transition` stages the transition
+# against the speech handle and `FactsRecorder` decides when that handle is
+# done. `SpeechHandle.interrupted` read there is final, because `interrupt()`
+# returns early on a handle that is already done (`speech_handle.py:195-197`).
+# The question being asked at the commit point is settled rather than in flight.
+#
+# Deferring is also cheaper than deciding early. A transition whose entry
+# condition is established by its own turn, such as the greeting that licenses
+# DISCOVERY, is refused by an issue-time check and admitted by this one. The
+# same repository's enumeration over all 9,834,496 four-turn sequences reports
+# the issue-time design refusing 19.19% of warranted transitions and violating
+# the interruption invariant 80 times, against zero and zero for the
+# completion-time design.
+#
+# `guarded_transition(..., commit="issue")` keeps the early design available for
+# comparison. It is not the one to deploy.
 #
 # -----------------------------------------------------------------------------
 # On context.disallow_interruptions()
