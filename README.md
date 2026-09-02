@@ -15,7 +15,7 @@ pip install -e ".[dev]" && pytest -v
 
 24 tests. No dependencies beyond pytest.
 
-**Contents** &nbsp;·&nbsp; [The fault](#the-fault) &nbsp;·&nbsp; [Why it matters beyond voice](#why-it-matters-beyond-voice) &nbsp;·&nbsp; [The three fixes](#the-three-fixes) &nbsp;·&nbsp; [The guard](#the-guard) &nbsp;·&nbsp; [The twelve guard tests](#the-twelve-guard-tests) &nbsp;·&nbsp; [What this is not](#what-this-is-not)
+**Contents** &nbsp;·&nbsp; [The fault](#the-fault) &nbsp;·&nbsp; [Why it matters beyond voice](#why-it-matters-beyond-voice) &nbsp;·&nbsp; [The three fixes](#the-three-fixes) &nbsp;·&nbsp; [The guard](#the-guard) &nbsp;·&nbsp; [The twelve guard tests](#the-twelve-guard-tests) &nbsp;·&nbsp; [What this is not](#what-this-is-not) &nbsp;·&nbsp; [Teaching materials](#teaching-materials)
 
 ---
 
@@ -224,7 +224,11 @@ Three further tests check the guard is a gate rather than a wall: the legitimate
 > [!NOTE]
 > This is a standalone reproduction written to isolate one fault, not the production system it was found in. It carries no LiveKit, no model provider and no audio, because none of those are necessary to demonstrate the mechanism, and including them would make the failure harder to see rather than easier.
 
-The production system this came from is a bilingual Arabic and English voice agent for qualification calls, carrying a 334-test suite of which ten are the guard tests reproduced here.
+The guard is a design extracted from a fault found in a production voice agent for outbound qualification calls; it is not a description of code that runs there today. That system's own interruption-cancellation hook was wired but never triggered, which is part of why the fault is worth a standalone reproduction.
+
+## Teaching materials
+
+`education/` holds a NeurIPS 2026 Education Track primer built on this repository: a notebook that reproduces the fault, compares three patterns for closing it, checks the guard exhaustively and then with Hypothesis, and ends with an exercise; plus an answer key and a facilitator guide. Prose and notebook are CC BY 4.0 (see `education/LICENSE-MATERIALS`); the code stays MIT.
 
 ## Licence
 
