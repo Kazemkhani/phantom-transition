@@ -1,0 +1,20 @@
+{
+  "barge_in_suppressed": 0,
+  "cancelled": 50,
+  "command": "experiments/frameworks/pipecat/.venv/bin/python experiments/frameworks/pipecat/run.py --config inflight-tool --n 50 --seed 20260902 --out results/frameworks/raw/pipecat-inflight-tool.jsonl",
+  "committed": 0,
+  "config": "inflight-tool",
+  "finished": "2026-09-02T07:53:04+00:00",
+  "handoff_applied": null,
+  "mechanism": "InterruptionFrame is a system frame; every processor's base handler (processors/frame_processor.py:839-841) calls _start_interruption (1130-1150), which cancels that processor's in-flight process task, killing a streaming inference mid-turn; LLMService.process_frame (services/llm_service.py:688-689) then runs _handle_interruptions (758-761), cancelling every running function-call task whose cancel_on_interruption is True, the register_function default (936-942), via _cancel_function_call (2016-2020). Cancellation is CancelledError at the tool's next await: a mutation already made stands, one still beyond the await never happens. The per-tool opt-out, register_function(..., cancel_on_interruption=False), protects the call from cancellation but does not suppress the barge-in",
+  "n": 50,
+  "rate": 0.0,
+  "runtime": "Pipecat",
+  "runtime_version": "1.8.1",
+  "seed": 20260902,
+  "started": "2026-09-02T07:51:22+00:00",
+  "tool_finished": 0,
+  "tool_record_kept": 0,
+  "unexpected": 0,
+  "verdict": "cancelled"
+}
