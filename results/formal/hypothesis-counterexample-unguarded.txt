@@ -3,6 +3,7 @@ Failing test case:
 state = UnguardedSessionMachine()
 state.grounded_transition()
 state.interrupted_turns_never_change_phase()
+state.interrupted_turns_write_no_facts()
 state.no_phase_entered_without_its_entry_condition()
 state.phase_never_advances_more_than_one_step()
 state.phase_never_moves_backward()

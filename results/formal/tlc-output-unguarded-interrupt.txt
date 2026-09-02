@@ -1,13 +1,13 @@
 TLC2 Version 2026.09.01.002747 (rev: 95b800c)
-Running breadth-first search Model-Checking with fp 76 and seed -2902342798643534805 with 1 worker on 11 cores with 4096MB heap and 64MB offheap memory [pid: 50004] (Mac OS X 26.3 aarch64, Oracle Corporation 23.0.1 64bit, MSBDiskFPSet, DiskStateQueue).
+Running breadth-first search Model-Checking with fp 18 and seed -8984683224279948615 with 1 worker on 11 cores with 4096MB heap and 64MB offheap memory [pid: 26695] (Mac OS X 26.3 aarch64, Oracle Corporation 23.0.1 64bit, MSBDiskFPSet, DiskStateQueue).
 Parsing file /Users/amirhosseinkazemkhani/dev/pt-formal/formal/PhaseGuard.tla
-Parsing file /private/var/folders/l9/_718fgnd2njfcw9vx_p_6p_00000gn/T/tlc-3221082015221359751/Naturals.tla (jar:file:/Users/amirhosseinkazemkhani/dev/pt-formal/formal/tools/tla2tools.jar!/tla2sany/StandardModules/Naturals.tla)
-Parsing file /private/var/folders/l9/_718fgnd2njfcw9vx_p_6p_00000gn/T/tlc-3221082015221359751/Sequences.tla (jar:file:/Users/amirhosseinkazemkhani/dev/pt-formal/formal/tools/tla2tools.jar!/tla2sany/StandardModules/Sequences.tla)
-Parsing file /private/var/folders/l9/_718fgnd2njfcw9vx_p_6p_00000gn/T/tlc-3221082015221359751/_TLCTrace.tla (jar:file:/Users/amirhosseinkazemkhani/dev/pt-formal/formal/tools/tla2tools.jar!/tla2sany/StandardModules/_TLCTrace.tla)
-Parsing file /private/var/folders/l9/_718fgnd2njfcw9vx_p_6p_00000gn/T/tlc-3221082015221359751/TLC.tla (jar:file:/Users/amirhosseinkazemkhani/dev/pt-formal/formal/tools/tla2tools.jar!/tla2sany/StandardModules/TLC.tla)
-Parsing file /private/var/folders/l9/_718fgnd2njfcw9vx_p_6p_00000gn/T/tlc-3221082015221359751/TLCExt.tla (jar:file:/Users/amirhosseinkazemkhani/dev/pt-formal/formal/tools/tla2tools.jar!/tla2sany/StandardModules/TLCExt.tla)
-Parsing file /private/var/folders/l9/_718fgnd2njfcw9vx_p_6p_00000gn/T/tlc-3221082015221359751/FiniteSets.tla (jar:file:/Users/amirhosseinkazemkhani/dev/pt-formal/formal/tools/tla2tools.jar!/tla2sany/StandardModules/FiniteSets.tla)
-Parsing file /private/var/folders/l9/_718fgnd2njfcw9vx_p_6p_00000gn/T/tlc-3221082015221359751/Integers.tla (jar:file:/Users/amirhosseinkazemkhani/dev/pt-formal/formal/tools/tla2tools.jar!/tla2sany/StandardModules/Integers.tla)
+Parsing file /private/var/folders/l9/_718fgnd2njfcw9vx_p_6p_00000gn/T/tlc-3065927140123074018/Naturals.tla (jar:file:/Users/amirhosseinkazemkhani/dev/pt-formal/formal/tools/tla2tools.jar!/tla2sany/StandardModules/Naturals.tla)
+Parsing file /private/var/folders/l9/_718fgnd2njfcw9vx_p_6p_00000gn/T/tlc-3065927140123074018/Sequences.tla (jar:file:/Users/amirhosseinkazemkhani/dev/pt-formal/formal/tools/tla2tools.jar!/tla2sany/StandardModules/Sequences.tla)
+Parsing file /private/var/folders/l9/_718fgnd2njfcw9vx_p_6p_00000gn/T/tlc-3065927140123074018/_TLCTrace.tla (jar:file:/Users/amirhosseinkazemkhani/dev/pt-formal/formal/tools/tla2tools.jar!/tla2sany/StandardModules/_TLCTrace.tla)
+Parsing file /private/var/folders/l9/_718fgnd2njfcw9vx_p_6p_00000gn/T/tlc-3065927140123074018/TLC.tla (jar:file:/Users/amirhosseinkazemkhani/dev/pt-formal/formal/tools/tla2tools.jar!/tla2sany/StandardModules/TLC.tla)
+Parsing file /private/var/folders/l9/_718fgnd2njfcw9vx_p_6p_00000gn/T/tlc-3065927140123074018/TLCExt.tla (jar:file:/Users/amirhosseinkazemkhani/dev/pt-formal/formal/tools/tla2tools.jar!/tla2sany/StandardModules/TLCExt.tla)
+Parsing file /private/var/folders/l9/_718fgnd2njfcw9vx_p_6p_00000gn/T/tlc-3065927140123074018/FiniteSets.tla (jar:file:/Users/amirhosseinkazemkhani/dev/pt-formal/formal/tools/tla2tools.jar!/tla2sany/StandardModules/FiniteSets.tla)
+Parsing file /private/var/folders/l9/_718fgnd2njfcw9vx_p_6p_00000gn/T/tlc-3065927140123074018/Integers.tla (jar:file:/Users/amirhosseinkazemkhani/dev/pt-formal/formal/tools/tla2tools.jar!/tla2sany/StandardModules/Integers.tla)
 Semantic processing of module Naturals
 Semantic processing of module Sequences
 Semantic processing of module FiniteSets
@@ -19,9 +19,9 @@ Semantic processing of module PhaseGuard
 Linting of module TLCExt
 Linting of module _TLCTrace
 Linting of module PhaseGuard
-Starting... (2026-09-02 07:24:51)
+Starting... (2026-09-02 11:11:13)
 Computing initial states...
-Finished computing initial states: 1 distinct state generated at 2026-09-02 07:24:51.
+Finished computing initial states: 1 distinct state generated at 2026-09-02 11:11:14.
 Error: Invariant InterruptedTurnsAreInert is violated.
 Error: The behavior up to this point is:
 State 1: <Initial predicate>
@@ -33,7 +33,7 @@ State 1: <Initial predicate>
 /\ turn = 0
 /\ events = <<>>
 
-State 2: <HandleTurn([id |-> 7, interrupted |-> TRUE, answers |-> FALSE, calls |-> <<1>>]) line 161, col 5 to line 182, col 20 of module PhaseGuard>
+State 2: <HandleTurn([id |-> 7, interrupted |-> TRUE, answers |-> FALSE, calls |-> <<1>>]) line 166, col 5 to line 193, col 20 of module PhaseGuard>
 /\ lastMove = [id |-> 7, interrupted |-> TRUE, answers |-> FALSE, calls |-> <<1>>]
 /\ prevFacts = [greeting_delivered |-> FALSE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
 /\ facts = [greeting_delivered |-> FALSE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
@@ -44,5 +44,5 @@ State 2: <HandleTurn([id |-> 7, interrupted |-> TRUE, answers |-> FALSE, calls |
 
 8 states generated, 8 distinct states found, 6 states left on queue.
 The depth of the complete state graph search is 2.
-Finished in 00s at (2026-09-02 07:24:51)
-Trace exploration spec path: ./PhaseGuard_TTrace_1788321291.tla
+Finished in 00s at (2026-09-02 11:11:14)
+Trace exploration spec path: ./PhaseGuard_TTrace_1788334873.tla

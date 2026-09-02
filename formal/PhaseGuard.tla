@@ -29,12 +29,17 @@ CONSTANTS
     PreemptiveGeneration,  \* Session(preemptive_generation=...)
     CancelOnInterrupt,     \* Session(cancel_handoff_on_interrupt=...)
     GuardEnabled,          \* Session(guard_enabled=...)
+    RecordOnInterrupt,     \* the M3 mutant: _record dedented out of the
+                           \* completed-turn branch, so facts are written on
+                           \* interrupted turns too. FALSE is the reference
+                           \* model.
     MaxTurns,              \* the bound on the number of turns explored
     Forged                 \* a model value: a target that is not a Phase
 
 ASSUME PreemptiveGeneration \in BOOLEAN
 ASSUME CancelOnInterrupt \in BOOLEAN
 ASSUME GuardEnabled \in BOOLEAN
+ASSUME RecordOnInterrupt \in BOOLEAN
 ASSUME MaxTurns \in Nat
 
 -----------------------------------------------------------------------------
@@ -167,11 +172,17 @@ HandleTurn(m) ==
            cancelled == IF CancelOnInterrupt
                         THEN [k \in 1..Len(executed) |-> "handoff_cancelled"]
                         ELSE << >>
+           finalPhase == IF CancelOnInterrupt
+                         THEN Unwind(executed, Len(executed), run.phase)
+                         ELSE run.phase
        IN IF m.interrupted
-          THEN /\ phase' = IF CancelOnInterrupt
-                           THEN Unwind(executed, Len(executed), run.phase)
-                           ELSE run.phase
-               /\ facts' = facts
+          THEN /\ phase' = finalPhase
+               \* The reference model writes no facts on an interrupted turn.
+               \* Under the M3 mutant, _record runs unconditionally after the
+               \* rollback, against the post-rollback phase.
+               /\ facts' = IF RecordOnInterrupt
+                           THEN Record(finalPhase, facts, m.answers)
+                           ELSE facts
                /\ events' = run.events \o << "speech_discarded" >> \o cancelled
           ELSE /\ phase' = run.phase
                /\ facts' = Record(run.phase, facts, m.answers)
@@ -224,6 +235,17 @@ EntryConditionRespected == phase /= prevPhase => Entry(phase, prevFacts)
 (* utterance because the module has none.                                  *)
 GroundedTransition ==
     phase /= prevPhase => (~lastMove.interrupted /\ Entry(phase, prevFacts))
+
+(* The fifth invariant, added after mutation testing (results/core-v2 in the
+   research hub) found a mutant, M3, that survives the published 24-test
+   suite: dedent self._record(turn) out of the completed-turn branch, so
+   facts are written on interrupted turns too. Invariants 1 to 4 are blind
+   to M3 by construction: they are conditions over the phase and the facts
+   record, and M3 corrupts the record itself, so every run of the mutant
+   satisfies them on its own (corrupted) facts. Catching M3 needs a
+   two-state property relating the facts before and after a turn, which is
+   what this invariant is (prevFacts is the history variable).             *)
+InterruptedTurnsWriteNoFacts == lastMove.interrupted => facts = prevFacts
 
 (* An emergent property of the guarded reference model, reported in        *)
 (* formal/README.md: PITCH is only ever entered on a clean turn, and the   *)

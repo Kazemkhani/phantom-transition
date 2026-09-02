@@ -146,6 +146,22 @@ class SessionMachine(RuleBasedStateMachine):
             )
 
     @invariant()
+    def interrupted_turns_write_no_facts(self) -> None:
+        """The fifth invariant, absent from the notebook and from test_12.
+
+        Mutation testing (results/core-v2 in the research hub, session c836e3,
+        verified independently by the orchestrator) found that dedenting
+        self._record(turn) out of the completed-turn branch survives the
+        published 24-test suite: the four invariants are conditions over the
+        phase and the facts record, and that mutant corrupts the record
+        itself. This two-state property is what catches it, and unlike the
+        nine-move alphabet of test_12, the move strategy here does generate
+        turns that are both interrupted and fact-establishing.
+        """
+        if self.last_turn is not None and self.last_turn.interrupted:
+            _require(self.session.facts == self.prev_facts, "an interrupted turn wrote facts")
+
+    @invariant()
     def grounded_transition(self) -> None:
         """A transition commits only on an uninvalidated turn whose facts satisfied the gate."""
         if self.session.phase != self.prev_phase:
@@ -196,6 +212,34 @@ settings.load_profile(os.environ.get("HYPOTHESIS_PROFILE", "default"))
 
 TestGuardedSession = SessionMachine.TestCase
 TestGuardedSession.settings = settings()
+
+
+# -- deterministic regression for the surviving mutant --------------------------------
+
+
+def test_an_interrupted_turn_writes_no_facts():
+    """Kills the M3 mutant (self._record dedented out of the completed-turn branch).
+
+    Baseline: an interrupted turn in DISCOVERY records nothing, however the
+    turn is labelled. Under M3 the answer is recorded and two such turns
+    later satisfy the PITCH gate with evidence from turns the caller never
+    completed. This is the deterministic version of the
+    interrupted_turns_write_no_facts invariant above.
+    """
+    s = Session(preemptive_generation=True)
+    s.handle_turn(Turn("hello"))
+    s.handle_turn(Turn("ok"), [_advance(Phase.DISCOVERY)])
+    before = s.facts
+    for _ in range(2):
+        s.handle_turn(
+            Turn("about ten staff", interrupted=True, answers_a_discovery_question=True),
+            [_advance(Phase.PITCH)],
+        )
+    _require(s.facts == before, "an interrupted turn wrote facts")
+    _require(s.phase is Phase.DISCOVERY, "an interrupted turn changed the phase")
+    # And the gate must still refuse PITCH, because no answer was recorded.
+    events = s.handle_turn(Turn("ok"), [_advance(Phase.PITCH)])
+    _require(events[0].kind == "handoff_denied", "PITCH admitted on facts from interrupted turns")
 
 
 # -- the broken variants are falsified, and the failure shrinks ---------------------

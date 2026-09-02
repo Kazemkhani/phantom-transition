@@ -12,6 +12,10 @@ PhaseGuard_unguarded_interrupt.cfg     exit=12  expected=12  Error: Invariant In
     8 states generated, 8 distinct states found, 6 states left on queue.
 PhaseGuard_cancel_only.cfg             exit=12  expected=12  Error: Invariant AtMostOneStep is violated.
     4 states generated, 4 distinct states found, 2 states left on queue.
+PhaseGuard_m3.cfg                      exit=12  expected=12  Error: Invariant InterruptedTurnsWriteNoFacts is violated.
+    8 states generated, 8 distinct states found, 6 states left on queue.
+PhaseGuard_m3_blind.cfg                exit=0   expected=0   Model checking completed. No error has been found.
+    2224 states generated, 343 distinct states found, 0 states left on queue.
 conformance bound4             exit=0   IDENTICAL: the specification and the reference implementation agree on every reachable state
 conformance bound8             exit=0   IDENTICAL: the specification and the reference implementation agree on every reachable state
 conformance unguarded          exit=0   IDENTICAL: the specification and the reference implementation agree on every reachable state

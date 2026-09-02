@@ -36,10 +36,16 @@ run PhaseGuard_bound8_witness.cfg      tlc-output-bound8-witness.txt      12
 run PhaseGuard_unguarded.cfg           tlc-output-unguarded.txt           12
 run PhaseGuard_unguarded_interrupt.cfg tlc-output-unguarded-interrupt.txt 12
 run PhaseGuard_cancel_only.cfg         tlc-output-cancel-only.txt         12
+run PhaseGuard_m3.cfg                  tlc-output-m3.txt                  12
+run PhaseGuard_m3_blind.cfg            tlc-output-m3-blind.txt            0
 
 # The counterexample the paper's Figure 1 describes, extracted from the run
 # that isolates the interruption invariant.
 sed -n '/^Error: Invariant/,/^Finished in/p' "$OUT/tlc-output-unguarded-interrupt.txt" > "$OUT/tlc-counterexample-unguarded.txt"
+
+# The M3 counterexample: an interrupted turn whose facts record changed,
+# caught by the fifth invariant while the original four hold on the trace.
+sed -n '/^Error: Invariant/,/^Finished in/p' "$OUT/tlc-output-m3.txt" > "$OUT/tlc-counterexample-m3.txt"
 
 # Conformance: dump every reachable state of three configurations and
 # compare each set exactly with a breadth-first search over the Python

@@ -1,4 +1,4 @@
-Error: Invariant InterruptedTurnsAreInert is violated.
+Error: Invariant InterruptedTurnsWriteNoFacts is violated.
 Error: The behavior up to this point is:
 State 1: <Initial predicate>
 /\ lastMove = [id |-> 0, interrupted |-> FALSE, answers |-> FALSE, calls |-> <<>>]
@@ -12,11 +12,11 @@ State 1: <Initial predicate>
 State 2: <HandleTurn([id |-> 7, interrupted |-> TRUE, answers |-> FALSE, calls |-> <<1>>]) line 166, col 5 to line 193, col 20 of module PhaseGuard>
 /\ lastMove = [id |-> 7, interrupted |-> TRUE, answers |-> FALSE, calls |-> <<1>>]
 /\ prevFacts = [greeting_delivered |-> FALSE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
-/\ facts = [greeting_delivered |-> FALSE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
+/\ facts = [greeting_delivered |-> TRUE, discovery_answers |-> 0, pitch_delivered |-> FALSE]
 /\ prevPhase = 0
-/\ phase = 1
+/\ phase = 0
 /\ turn = 1
-/\ events = <<"handoff_executed", "speech_discarded">>
+/\ events = <<"handoff_denied", "speech_discarded">>
 
 8 states generated, 8 distinct states found, 6 states left on queue.
 The depth of the complete state graph search is 2.
