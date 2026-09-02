@@ -17,3 +17,6 @@ formal/tools/
 # TLC trace-exploration artefacts
 formal/*_TTrace_*
 formal/states/
+
+# mutmut working directory
+mutants/
