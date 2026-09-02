@@ -32,6 +32,13 @@ thrown away therefore leaves no evidence behind, so no later transition can
 cite it. Timing decides *when* a legitimate transition is admitted. It cannot
 decide *whether* an unearned one is.
 
+The honest limit of that, stated so nobody has to find it later: a transition
+whose evidence *does* exist can still commit on a turn the caller interrupted,
+if the interrupt has not landed by the time the tool runs. What it cannot do is
+go any further. That turn wrote no facts either, so the gate on the next phase
+is still shut. A phantom transition under this adapter is bounded to one step,
+into a phase that was already earned, and it cannot cascade.
+
 That is the difference between admission and rollback, and it is why this
 adapter does not try to undo a transition after the fact. See
 `examples/livekit_guarded_agent.py` for why the rollback shape cannot be built

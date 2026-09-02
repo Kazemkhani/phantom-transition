@@ -13,9 +13,11 @@ A minimal reproduction, and fix, for a failure mode in phase-gated multi-agent v
 pip install -e ".[dev]" && pytest -v
 ```
 
-24 tests. No dependencies beyond pytest.
+70 tests. No dependencies beyond pytest. The LiveKit adapter is an optional
+extra: the core package imports nothing outside the standard library, and its
+tests run with fakes and no LiveKit installed.
 
-**Contents** &nbsp;·&nbsp; [The fault](#the-fault) &nbsp;·&nbsp; [Why it matters beyond voice](#why-it-matters-beyond-voice) &nbsp;·&nbsp; [The three fixes](#the-three-fixes) &nbsp;·&nbsp; [The guard](#the-guard) &nbsp;·&nbsp; [The twelve guard tests](#the-twelve-guard-tests) &nbsp;·&nbsp; [What this is not](#what-this-is-not)
+**Contents** &nbsp;·&nbsp; [The fault](#the-fault) &nbsp;·&nbsp; [Why it matters beyond voice](#why-it-matters-beyond-voice) &nbsp;·&nbsp; [The three fixes](#the-three-fixes) &nbsp;·&nbsp; [The guard](#the-guard) &nbsp;·&nbsp; [The twelve guard tests](#the-twelve-guard-tests) &nbsp;·&nbsp; [Adopting the guard in LiveKit Agents](#adopting-the-guard-in-livekit-agents) &nbsp;·&nbsp; [The same fault with no voice at all](#the-same-fault-with-no-voice-at-all) &nbsp;·&nbsp; [What this is not](#what-this-is-not)
 
 ---
 
@@ -219,12 +221,92 @@ phase: GREETING
 
 Three further tests check the guard is a gate rather than a wall: the legitimate path still traverses all four phases, the guard is pure, and `Facts` cannot be mutated in place.
 
+## Adopting the guard in LiveKit Agents
+
+```
+pip install -e ".[livekit]"
+```
+
+(Not published to PyPI. Clone the repository and install it from the working tree.)
+
+Five lines, inside a worker you already have. `examples/livekit_guarded_agent.py` is the whole thing on a real `Agent`.
+
+```python
+from phantom_transition import Phase
+from phantom_transition.livekit import guard_session, guarded_transition
+
+guard_session(session)                                    # 1
+
+@function_tool()                                          # 2
+@guarded_transition(Phase.DISCOVERY)                      # 3
+async def move_to_discovery(context: RunContext) -> str:  # 4
+    return "Thanks. What brought you in today?"           # 5
+```
+
+Line 1 attaches a `FactsRecorder` to the session. It subscribes to `speech_created` and `user_input_transcribed` and writes the guard's facts from what it observes: a greeting counts as delivered when the speech handle that carried it completes with `SpeechHandle.interrupted` False, and a discovery answer counts when a user turn completes. It never reads `UserInputTranscribedEvent.transcript`. The utterance is not one of the guard's inputs at any point in the chain.
+
+Lines 2 to 5 are an ordinary function tool with one decorator added. `@guarded_transition` goes **under** `@function_tool()`, closest to the function; above it, `function_tool` would build the tool's name, description and schema from the wrong callable.
+
+The decorated tool refuses on three grounds and returns a spoken string rather than raising, so the model keeps its turn and can recover:
+
+| Refusal | Reason the model is given |
+| --- | --- |
+| the speech handle carrying the call was already interrupted | `the turn that proposed this transition was interrupted` |
+| the transition is not the next legal one | `cannot skip from GREETING to CLOSE` |
+| the destination's entry conditions are unmet | `entry conditions for PITCH not met` |
+
+A fourth refusal covers the failure that motivated the whole library: if no `FactsRecorder` is attached, the tool refuses rather than passing through. A guard that silently does nothing is the thing being fixed, not an acceptable default.
+
+Every LiveKit API name above was read out of an installed `livekit-agents` 1.7.1, not written from memory. The adapter imports `livekit.agents` lazily, inside functions, so the core package stays dependency-free and the adapter's tests run against fakes with no server, no room and no model.
+
+### On `context.disallow_interruptions()`
+
+> [!NOTE]
+> Non-cancellation is documented, intended behaviour, and the framework already offers a per-tool opt-out. `RunContext.disallow_interruptions()` sets `allow_interruptions = False` on the speech handle carrying the call, so the turn can no longer be interrupted while the tool runs. For many mutating tools that is the right answer.
+
+It is not this one, for three reasons.
+
+1. **It spends barge-in to buy state safety, on every transition, for every caller.** In a real-time call that is a naturalness and latency cost the caller can hear.
+2. **It is a discretionary per-tool opt-in.** It protects the tools someone remembered to annotate, and does not survive the next tool being added by someone who did not read the comment above it.
+3. **It answers a different question.** It prevents cancellation *during execution*. It says nothing about whether the destination phase's entry evidence was ever recorded, and it raises `RuntimeError` if the handle is already interrupted, which is the case that started all this.
+
+The two compose, and there is every reason to use both on a tool that also charges a card. `guarded_transition` decides admission; whether the turn may be interrupted while the body runs is a separate choice.
+
+### What the adapter guarantees, and what it does not
+
+The interruption checks are races, in exactly the way the framework's own cancellation is a race: a tool that finished before cancellation reached it is committed regardless, and a synchronous state mutation with no `await` point in it almost always will have.
+
+What is not a race is the facts record. An interrupted speech writes no fact, so a turn that was thrown away leaves no evidence behind for a later transition to cite. A phase whose entry evidence was never recorded cannot be entered, whatever the timing does, and a transition that does slip through on an interrupted turn cannot cascade, because that turn recorded nothing for the next gate either.
+
+That is the difference between admission and rollback, and it is why the adapter does not try to undo a transition after the fact. `examples/livekit_guarded_agent.py` closes with a worked case: a production deployment that wrote the cancel-on-interrupt correction, using the correct APIs, and could never have fired it, for two independent reasons.
+
+## The same fault with no voice at all
+
+```
+python examples/text_agent_stop_button.py
+```
+
+A text agent with a stop button, in standard-library `asyncio`. The model emits a tool call and starts streaming; the runtime dispatches the call rather than holding it until the reply is finished; the user presses stop; the partial reply is wiped and the tool task is cancelled the way a runtime cancels it. The task had already finished.
+
+There is no barge-in in it, no audio, no turn detector and no endpointing. A test parses the example's own imports and fails if anyone ever adds one.
+
+The example keeps the two fixes on separate switches, because they close different things:
+
+| | stop lands **before** the greeting was delivered | stop lands **after**, on an earned transition |
+| --- | --- | --- |
+| unguarded | `DISCOVERY` | `DISCOVERY` |
+| refuse on a pressed stop | `DISCOVERY` | `GREETING` |
+| facts check | `GREETING` | `DISCOVERY` |
+| both | `GREETING` | `GREETING` |
+
+The stop check loses the race in the left column, where the stop lands after the tool has already run. The facts check has no race in it: `DISCOVERY` needs a delivered greeting, and a discarded turn does not deliver one. It admits the right column because the greeting genuinely was delivered on an earlier, completed turn, which is the honest limit of what a precondition over recorded facts can do.
+
 ## What this is not
 
 > [!NOTE]
 > This is a standalone reproduction written to isolate one fault, not the production system it was found in. It carries no LiveKit, no model provider and no audio, because none of those are necessary to demonstrate the mechanism, and including them would make the failure harder to see rather than easier.
 
-The production system this came from is a bilingual Arabic and English voice agent for qualification calls, carrying a 334-test suite of which ten are the guard tests reproduced here.
+The production system this came from is a bilingual voice agent for qualification calls. The guard here is a design extracted from a fault found in it, not code that runs in it: that system has no fact-based guard on its phase transitions, and the interruption-cancellation hook it does carry has never fired. `examples/livekit_guarded_agent.py` describes that hook, anonymised, and the two independent reasons it could not have.
 
 ## Licence
 

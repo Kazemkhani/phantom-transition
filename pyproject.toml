@@ -14,6 +14,10 @@ keywords = ["voice-ai", "multi-agent", "llm-agents", "barge-in", "ai-safety"]
 
 [project.optional-dependencies]
 dev = ["pytest>=7.4"]
+# The adapter in `phantom_transition.livekit`. The core package has no runtime
+# dependencies and never imports livekit.agents at module scope, so this extra
+# is only needed to run a guarded agent, not to import or test the guard.
+livekit = ["livekit-agents>=1.7,<2"]
 
 [project.urls]
 Homepage = "https://amirkazemkhani.com"
