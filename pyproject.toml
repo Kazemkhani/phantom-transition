@@ -8,7 +8,7 @@ version = "1.1.0"
 description = "A reproduction and fix for phantom phase transitions in interruptible multi-agent voice systems"
 readme = "README.md"
 requires-python = ">=3.10"
-license = { text = "MIT" }
+license = { text = "Apache-2.0" }
 authors = [{ name = "Amir Hossein Kazemkhani", email = "amir@amirkazemkhani.com" }]
 keywords = ["voice-ai", "multi-agent", "llm-agents", "barge-in", "ai-safety"]
 
