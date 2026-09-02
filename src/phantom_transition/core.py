@@ -406,6 +406,45 @@ def exhaustive_four_turn(session_cls: type[Session] = GuardedSession) -> tuple[i
     return r.sequences, r.total_violations
 
 
+def verify_reduction_soundness(
+    session_cls: type[Session], depth: int = 4, moves: list[Move] | None = None
+) -> tuple[int, int]:
+    """Discharge the obligation the reduction rests on, rather than assert it.
+
+    `bounded_check` explores each distinct (phase, facts) once per depth
+    instead of replaying every sequence. That is sound only if the successor
+    of a state under a move is determined by the state and the move alone,
+    with no dependence on the path that reached it. If two different histories
+    arriving at the same state could diverge under the same move, collapsing
+    them would hide behaviour.
+
+    This walks every sequence up to `depth` and records, for each
+    (state, move) pair encountered, the successor it produced. A repeat of the
+    pair with a different successor is a counterexample and raises. Returning
+    without raising means the obligation holds over the whole explored space,
+    and the induction on depth then gives soundness of the reduction there.
+
+    Returns (distinct state-move pairs seen, sequences walked).
+    """
+    moves = alphabet() if moves is None else moves
+    seen: dict[tuple[Phase, Facts, Move], tuple[Phase, Facts]] = {}
+    sequences = 0
+    for seq in product(moves, repeat=depth):
+        s = session_cls()
+        for move in seq:
+            key = (s.phase, s.facts, move)
+            _, _, p1, f1 = step(s, move)
+            previous = seen.get(key)
+            if previous is not None and previous != (p1, f1):
+                raise AssertionError(
+                    f"the successor is not determined by the state: {key} gave "
+                    f"{previous} and then {(p1, f1)}"
+                )
+            seen[key] = (p1, f1)
+        sequences += 1
+    return len(seen), sequences
+
+
 # ---------------------------------------------------------------------------
 # 4. The guard's cost: what it refuses, and how long it takes to decide.
 # ---------------------------------------------------------------------------
@@ -490,6 +529,7 @@ def characterise(session_cls: type[Session], depth: int = 4, moves: list[Move] |
 
 
 __all__ = [
+    "verify_reduction_soundness",
     "Phase", "Facts", "ENTRY", "entry_satisfied", "Act", "record",
     "Session", "UnguardedSession", "RollbackSession", "EvidenceGatedSession",
     "PhaseGuard", "GuardedSession",
