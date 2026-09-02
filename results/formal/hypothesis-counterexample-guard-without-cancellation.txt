@@ -1,0 +1,23 @@
+GuardWithoutCancellationMachine: ungrounded transition into DISCOVERY
+Failing test case:
+state = GuardWithoutCancellationMachine()
+state.grounded_transition()
+state.interrupted_turns_never_change_phase()
+state.no_phase_entered_without_its_entry_condition()
+state.phase_never_advances_more_than_one_step()
+state.phase_never_moves_backward()
+state.take_turn(move=(Turn(utterance='hello',
+  interrupted=False,
+  answers_a_discovery_question=False),
+ []))
+state.grounded_transition()
+state.interrupted_turns_never_change_phase()
+state.no_phase_entered_without_its_entry_condition()
+state.phase_never_advances_more_than_one_step()
+state.phase_never_moves_backward()
+state.take_turn(move=(Turn(utterance='no wait',
+  interrupted=True,
+  answers_a_discovery_question=False),
+ [ToolCall(name='advance_phase', args={'target': <Phase.DISCOVERY: 1>})]))
+state.grounded_transition()
+state.teardown()
