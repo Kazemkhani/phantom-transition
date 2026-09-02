@@ -120,12 +120,25 @@ def render_transcript(session: dict[str, Any]) -> tuple[str, str]:
     return "\n".join(lines), response
 
 
-def render_user_prompt(session: dict[str, Any]) -> str:
+def plain_system_prompt(session: dict[str, Any]) -> str:
+    """The agent's stage list without the gate thresholds (bank.SYSTEM_PROMPT_PLAIN)."""
+    from judge_blindness import bank
+
+    c = session["cast"]
+    vertical = next(v for v in bank.VERTICALS if v["name"] == c["vertical"])
+    return bank.SYSTEM_PROMPT_PLAIN.format(
+        agent=c["agent"], caller=c["caller"], company=c["company"],
+        caller_company=c["caller_company"], vertical=vertical["name"], enquiry=vertical["enquiry"],
+    )
+
+
+def render_user_prompt(session: dict[str, Any], *, plain_prompt: bool = False) -> str:
     history, response = render_transcript(session)
     criteria = "\n".join(f"{i}. {c}" for i, c in enumerate(session["recovery_criteria"], 1))
+    system_prompt = plain_system_prompt(session) if plain_prompt else session["system_prompt"]
     return (
         f"Judgement id: {session['id']}\n\n"
-        f"## Assistant system prompt\n{session['system_prompt']}\n\n"
+        f"## Assistant system prompt\n{system_prompt}\n\n"
         f"## Conversation history\n{history}\n\n"
         f"## Response under evaluation\nassistant: {response}\n\n"
         f"## Recovery criteria\n{criteria}\n\n"
@@ -136,8 +149,11 @@ def render_user_prompt(session: dict[str, Any]) -> str:
     )
 
 
-def build_requests(sessions: Iterable[dict[str, Any]]) -> list[dict[str, str]]:
-    return [{"id": s["id"], "system": JUDGE_SYSTEM_PROMPT, "user": render_user_prompt(s)} for s in sessions]
+def build_requests(sessions: Iterable[dict[str, Any]], *, plain_prompt: bool = False) -> list[dict[str, str]]:
+    return [
+        {"id": s["id"], "system": JUDGE_SYSTEM_PROMPT, "user": render_user_prompt(s, plain_prompt=plain_prompt)}
+        for s in sessions
+    ]
 
 
 # --- Emit and ingest ---------------------------------------------------------
@@ -150,10 +166,11 @@ def emit_prompts(
     batch_dir: Path | None = None,
     batch_size: int = 25,
     seed: int = 0,
+    plain_prompt: bool = False,
 ) -> list[dict[str, str]]:
     """Write one JSONL line per request. Order is a seeded shuffle so that
     batches mix arms and a batch judge cannot infer the arm from position."""
-    requests = build_requests(sessions)
+    requests = build_requests(sessions, plain_prompt=plain_prompt)
     random.Random(f"emit:{seed}").shuffle(requests)
     out.parent.mkdir(parents=True, exist_ok=True)
     with out.open("w") as fh:
@@ -384,6 +401,7 @@ def main(argv: list[str] | None = None) -> int:
     e.add_argument("--batch-dir", type=Path)
     e.add_argument("--batch-size", type=int, default=25)
     e.add_argument("--seed", type=int, default=0)
+    e.add_argument("--plain-prompt", action="store_true", help="show the judge the stage list without gate thresholds")
 
     i = sub.add_parser("ingest", help="read judgements back from JSONL")
     i.add_argument("files", type=Path, nargs="+")
@@ -401,7 +419,10 @@ def main(argv: list[str] | None = None) -> int:
     args = p.parse_args(argv)
     if args.cmd == "emit":
         sessions = [json.loads(l) for l in args.sessions.read_text().splitlines() if l.strip()]
-        reqs = emit_prompts(sessions, args.out, batch_dir=args.batch_dir, batch_size=args.batch_size, seed=args.seed)
+        reqs = emit_prompts(
+            sessions, args.out, batch_dir=args.batch_dir, batch_size=args.batch_size,
+            seed=args.seed, plain_prompt=args.plain_prompt,
+        )
         print(f"emitted {len(reqs)} requests to {args.out}" + (f" and batches to {args.batch_dir}" if args.batch_dir else ""))
     elif args.cmd == "ingest":
         report = ingest(args.files, args.out, judge_name=args.judge_name)

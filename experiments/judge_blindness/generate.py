@@ -123,9 +123,10 @@ class Plan:
     picks: dict[str, int] = field(default_factory=dict)
 
 
-def session_id(seed: int, arm: str, index: int) -> str:
+def session_id(seed: int, arm: str, index: int, variant: str = "") -> str:
     """Opaque identifier. Reveals neither the arm nor the index to a judge."""
-    digest = hashlib.sha1(f"{seed}:{arm}:{index}".encode()).hexdigest()
+    key = f"{seed}:{arm}:{index}" + (f":{variant}" if variant else "")
+    digest = hashlib.sha1(key.encode()).hexdigest()
     return "s" + digest[:10]
 
 
@@ -169,7 +170,7 @@ def _draw_plan(seed: int, index: int) -> Plan:
         picks[f"q_{cat}_first"] = rng.randrange(len(bank.DISCOVERY[cat]["first"]))
         picks[f"q_{cat}_retry"] = rng.randrange(len(bank.DISCOVERY[cat]["retry"]))
         picks[f"a_{cat}"] = rng.randrange(len(bank.DISCOVERY[cat]["answers"]))
-    return Plan(
+    plan = Plan(
         agent=rng.choice(bank.AGENT_NAMES),
         caller=rng.choice(bank.CALLER_NAMES),
         vertical=vertical,
@@ -186,6 +187,9 @@ def _draw_plan(seed: int, index: int) -> Plan:
         cut_fraction=rng.uniform(0.35, 0.70),
         picks=picks,
     )
+    # Drawn last so that adding it did not shift any draw of the main corpus.
+    plan.picks["acknowledge"] = rng.randrange(len(bank.CALLER_ACKNOWLEDGES))
+    return plan
 
 
 class Renderer:
@@ -286,6 +290,8 @@ def _caller(expect: str, r: Renderer, kind: str) -> tuple[str, bool]:
         return r.pick(bank.CALLER_REACTS_TO_PITCH, "react"), False
     if expect == "agree":
         return r.pick(bank.CALLER_AGREES, "agree"), False
+    if expect == "acknowledge":
+        return r.pick(bank.CALLER_ACKNOWLEDGES, "acknowledge"), False
     return r.pick(bank.CALLER_GOODBYES, "goodbye"), False
 
 
@@ -322,9 +328,26 @@ def _facts(f: Facts) -> dict[str, Any]:
     return asdict(f)
 
 
-def build_session(seed: int, arm: str, index: int) -> dict[str, Any]:
+VARIANTS = ("", "deferred")
+
+
+def build_session(seed: int, arm: str, index: int, variant: str = "") -> dict[str, Any]:
+    """Build one session.
+
+    ``variant=""`` is the main design: the recovery utterance addresses the
+    interruption and, in the same turn, continues with the agent's next move,
+    so the destination phase's behaviour is visible in the response under
+    evaluation. ``variant="deferred"`` splits that into two turns: the
+    recovery utterance is the address alone, the caller acknowledges it, and
+    the phase-specific utterance follows on the next agent turn, which a
+    per-turn interruption-recovery judge never scores. In the deferred variant
+    the response under evaluation is identical across the phantom and control
+    arms by construction; the state trace is not.
+    """
     if arm not in ARMS:
         raise ValueError(f"unknown arm: {arm!r}")
+    if variant not in VARIANTS:
+        raise ValueError(f"unknown variant: {variant!r}")
     plan = _draw_plan(seed, index)
     r = Renderer(plan)
     fixed = arm != "phantom"
@@ -338,6 +361,8 @@ def build_session(seed: int, arm: str, index: int) -> dict[str, Any]:
     injected_at: int | None = None
     retry_kind: str | None = None
     pending_bad: str | None = None
+    recovering = False       # this exchange is the recovery utterance
+    deferred_move = False    # this exchange is the phase move after a deferred address
 
     while len(exchanges) < MAX_EXCHANGES:
         phase, facts = session.phase, session.facts
@@ -361,14 +386,23 @@ def build_session(seed: int, arm: str, index: int) -> dict[str, Any]:
             if arm == "bad_recovery":
                 pending_bad = remainder(text, cut_words)
         else:
-            if retry_kind is not None:
+            if recovering:
                 # Recovery utterance: address the interruption, then a fresh start.
                 if arm == "bad_recovery" and pending_bad is not None:
                     text = pending_bad
                     pending_bad = None
+                elif variant == "deferred":
+                    # Address only; the agent's next move waits for the next turn.
+                    text = r.address()
+                    tools = []
+                    expect = "acknowledge"
                 else:
                     text = f"{r.address()} {text}"
                 kind = f"recovery:{kind}"
+            elif deferred_move:
+                # The turn after a deferred address: the phase-specific move, as a
+                # fresh start, rendered from whatever phase the runtime is in now.
+                kind = f"deferred:{kind}"
             caller, answers = _caller(expect, r, kind.split(":")[-1])
 
         calls = [ToolCall("advance_phase", {"target": t}) for t in tools]
@@ -400,7 +434,13 @@ def build_session(seed: int, arm: str, index: int) -> dict[str, Any]:
                 events=[e.kind + (":" + e.detail if e.detail else "") for e in events],
             )
         )
-        retry_kind = kind if interrupted else None
+        if interrupted:
+            retry_kind, recovering, deferred_move = kind, True, False
+        elif recovering and variant == "deferred" and arm != "bad_recovery":
+            # Keep the fresh-start rendering for the phase move that follows.
+            recovering, deferred_move = False, True
+        else:
+            retry_kind, recovering, deferred_move = None, False, False
         if expect == "goodbye":
             break
 
@@ -408,10 +448,11 @@ def build_session(seed: int, arm: str, index: int) -> dict[str, Any]:
         raise RuntimeError(f"no injection point reached for {plan.transition} (index {index})")
 
     return {
-        "id": session_id(seed, arm, index),
+        "id": session_id(seed, arm, index, variant),
         "arm": arm,
         "index": index,
         "seed": seed,
+        "variant": variant or "main",
         "transition": plan.transition,
         "interruption_type": plan.interruption_type,
         "injection_index": injected_at,
@@ -429,8 +470,8 @@ def build_session(seed: int, arm: str, index: int) -> dict[str, Any]:
     }
 
 
-def generate(seed: int, n: int, arms: tuple[str, ...] = ARMS) -> list[dict[str, Any]]:
-    return [build_session(seed, arm, i) for arm in arms for i in range(n)]
+def generate(seed: int, n: int, arms: tuple[str, ...] = ARMS, variant: str = "") -> list[dict[str, Any]]:
+    return [build_session(seed, arm, i, variant) for arm in arms for i in range(n)]
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -438,8 +479,10 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--seed", type=int, default=20260902)
     p.add_argument("--n", type=int, default=200, help="sessions per arm")
     p.add_argument("--out", type=Path, default=Path("results/judge_blindness/sessions.jsonl"))
+    p.add_argument("--arms", nargs="+", default=list(ARMS), choices=ARMS)
+    p.add_argument("--variant", default="", choices=VARIANTS)
     args = p.parse_args(argv)
-    sessions = generate(args.seed, args.n)
+    sessions = generate(args.seed, args.n, tuple(args.arms), args.variant)
     args.out.parent.mkdir(parents=True, exist_ok=True)
     with args.out.open("w") as fh:
         for s in sessions:

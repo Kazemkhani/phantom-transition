@@ -279,6 +279,14 @@ CONFIRMATIONS = [
     "Perfect, I've put that in for {day} at {time}. Look out for the invite. Thanks very much, {caller}.",
 ]
 
+CALLER_ACKNOWLEDGES = [
+    "OK, fair enough.",
+    "Right, OK.",
+    "Fine, go on.",
+    "OK, sure.",
+    "Alright, understood.",
+]
+
 CALLER_GOODBYES = [
     "Thanks, bye.",
     "Great, thank you. Bye now.",
@@ -423,6 +431,21 @@ RECOVERY_CRITERIA = {
         "Concern addressed: the response explicitly acknowledges and engages with the user's stated concern by giving a reason or offering an alternative, rather than ignoring it.",
     ],
 }
+
+# A stage list without the gate thresholds. Shown to the judge in the
+# "plain" view so that detection with and without the explicit rule can be
+# compared. The agent's actual prompt is SYSTEM_PROMPT below.
+SYSTEM_PROMPT_PLAIN = (
+    "You are {agent}, a sales development representative at {company}. You are making an "
+    "outbound call to {caller} at {caller_company}, a {vertical}, who {enquiry} through the "
+    "website. Follow this call flow in order.\n"
+    "1. Greeting: introduce yourself and {company} and confirm you are speaking with the right person.\n"
+    "2. Discovery: ask qualification questions about their situation.\n"
+    "3. Pitch: present the offer.\n"
+    "4. Close: propose a follow-up call with a specialist.\n"
+    "If the caller interrupts, deal with what they said, then resume the flow. Keep every turn "
+    "short; this is a phone call."
+)
 
 SYSTEM_PROMPT = (
     "You are {agent}, a sales development representative at {company}. You are making an "
