@@ -63,6 +63,11 @@ class Config:
     disallow_interruptions
         Whether the tool invokes the runtime's per-tool barge-in opt-out
         (LiveKit: RunContext.disallow_interruptions()) before mutating.
+    handoff
+        Whether the tool, after mutating state, also returns the runtime's
+        agent-handoff primitive (LiveKit: returning an Agent). This is the
+        shape the production transition tools take. Runtimes without a
+        handoff primitive report this configuration as not measured.
     """
 
     name: str
@@ -72,6 +77,7 @@ class Config:
     barge_in_offset_s: float = 1.0
     barge_in_jitter_s: float = 0.0
     disallow_interruptions: bool = False
+    handoff: bool = False
 
 
 # The configurations every runtime is asked to run. A runtime that cannot run
@@ -121,6 +127,19 @@ CONFIGS: tuple[Config, ...] = (
         barge_in_offset_s=1.0,
         barge_in_jitter_s=0.2,
         disallow_interruptions=True,
+    ),
+    Config(
+        name="handoff-tool",
+        description=(
+            "as sync-tool, but the tool also returns the runtime's agent-handoff "
+            "primitive after mutating, the shape of the production transition tools; "
+            "measures whether the mutation and the handoff share a fate"
+        ),
+        tool_delay_s=0.0,
+        tool_emit_offset_s=0.0,
+        barge_in_offset_s=1.0,
+        barge_in_jitter_s=0.2,
+        handoff=True,
     ),
 )
 
@@ -177,6 +196,7 @@ class RunRecord:
     speech_interrupted: bool
     tool_record_in_context: bool | None = None
     tools_executed_event: bool | None = None
+    handoff_applied: bool | None = None
     playback_seconds: float | None = None
     t_tool_started_s: float | None = None
     t_tool_finished_s: float | None = None
@@ -221,6 +241,7 @@ class Summary:
     barge_in_suppressed: int
     tool_finished: int
     tool_record_kept: int | None
+    handoff_applied: int | None = None
     mechanism: str = ""
 
     @property
@@ -264,6 +285,7 @@ def summarise(records: Iterable[RunRecord], *, mechanism: str = "") -> Summary:
     first = recs[0]
     outcomes = [r.outcome for r in recs]
     kept = [r.tool_record_in_context for r in recs]
+    handoffs = [r.handoff_applied for r in recs]
     return Summary(
         runtime=first.runtime,
         runtime_version=first.runtime_version,
@@ -276,6 +298,9 @@ def summarise(records: Iterable[RunRecord], *, mechanism: str = "") -> Summary:
         barge_in_suppressed=sum(1 for r in recs if not r.speech_interrupted),
         tool_finished=sum(1 for r in recs if r.tool_finished),
         tool_record_kept=(sum(1 for k in kept if k) if all(k is not None for k in kept) else None),
+        handoff_applied=(
+            sum(1 for h in handoffs if h) if all(h is not None for h in handoffs) else None
+        ),
         mechanism=mechanism,
     )
 

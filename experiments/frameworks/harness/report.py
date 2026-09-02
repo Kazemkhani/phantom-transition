@@ -23,6 +23,8 @@ def _cell_text(cell: Cell, *, tex: bool = False) -> str:
         body = f"{v} ({cell.committed}/{cell.n} committed)"
     if cell.barge_in_suppressed:
         body += f"; barge-in suppressed {cell.barge_in_suppressed}/{cell.n}"
+    if cell.handoff_applied is not None:
+        body += f"; handoff applied {cell.handoff_applied}/{cell.n}"
     return body
 
 
@@ -74,15 +76,17 @@ def render_matrix_md(cells: Sequence[Cell], *, seed: int, n: int, commit: str) -
     lines += ["", "## Per-cell detail", ""]
     lines.append(
         "| Runtime | Version | Config | N | committed | cancelled | tool finished | "
-        "tool record kept | barge-in suppressed |"
+        "tool record kept | barge-in suppressed | handoff applied |"
     )
-    lines.append("|---|---|---|---|---|---|---|---|---|")
+    lines.append("|---|---|---|---|---|---|---|---|---|---|")
     for c in cells:
         if isinstance(c, Summary):
             kept = "n/a" if c.tool_record_kept is None else str(c.tool_record_kept)
+            handoff = "n/a" if c.handoff_applied is None else str(c.handoff_applied)
             lines.append(
                 f"| {c.runtime} | {c.runtime_version} | {c.config} | {c.n} | {c.committed} | "
-                f"{c.cancelled} | {c.tool_finished} | {kept} | {c.barge_in_suppressed} |"
+                f"{c.cancelled} | {c.tool_finished} | {kept} | {c.barge_in_suppressed} | "
+                f"{handoff} |"
             )
     return "\n".join(lines) + "\n"
 

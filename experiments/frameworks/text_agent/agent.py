@@ -94,6 +94,7 @@ class SessionState:
     stop_pressed: bool = False
     stop_honoured: bool = False
     interruptions_allowed: bool = True
+    active_agent: str = "greeting"
     t0: float = 0.0
     t_tool_started: float | None = None
     t_tool_finished: float | None = None
@@ -133,6 +134,10 @@ class TextAgent:
                 st.staged_phase = target
             else:
                 st.phase = target
+                if self.config.handoff:
+                    # A framework-free agent has no handoff primitive beyond
+                    # another field on the same state; it shares the mutation's fate.
+                    st.active_agent = target.lower()
             st.tool_finished = True
             st.t_tool_finished = time.perf_counter() - st.t0
             return f"phase is now {target}"
@@ -155,6 +160,8 @@ class TextAgent:
             await asyncio.gather(*self._tool_tasks, return_exceptions=True)
         if self.policy == "staged" and st.staged_phase is not None:
             st.phase = st.staged_phase
+            if self.config.handoff:
+                st.active_agent = st.staged_phase.lower()
             st.staged_phase = None
 
     def press_stop(self) -> None:
@@ -204,6 +211,7 @@ class TextAgent:
             speech_interrupted=st.stop_honoured,
             tool_record_in_context=None,
             tools_executed_event=None,
+            handoff_applied=(st.active_agent != "greeting") if self.config.handoff else None,
             playback_seconds=(len(st.spoken) * llm._interval),
             t_tool_started_s=(st.t_tool_started / self.scale if st.t_tool_started else None),
             t_tool_finished_s=(st.t_tool_finished / self.scale if st.t_tool_finished else None),
