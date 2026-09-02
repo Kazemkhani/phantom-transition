@@ -588,3 +588,45 @@ def test_the_interrupted_branch_reports_no_agent_handoff():
     assert len(event.zipped()) == 1
     event.cancel_agent_handoff()
     assert event.has_agent_handoff is False
+
+
+def test_a_guarded_tool_registers_and_runs_as_a_real_agent_method(session, recorder):
+    """The descriptor path: `@function_tool()` on a method of a real `Agent`.
+
+    `_BaseFunctionTool.__get__` (llm/tool_context.py:248-258) rebinds the tool
+    per instance and strips `self` from the published signature, then
+    `__call__` (:260-263) puts the instance back. The wrapper has to survive
+    both, and the `RunContext` has to still be findable among the arguments
+    once `self` is in front of it.
+    """
+    pytest.importorskip("livekit.agents")
+    from livekit.agents import Agent, function_tool
+    from livekit.agents.llm.utils import build_legacy_openai_schema
+
+    class QualificationAgent(Agent):
+        def __init__(self) -> None:
+            super().__init__(instructions="Greet, discover, pitch, close.")
+
+        @function_tool()
+        @guarded_transition(Phase.DISCOVERY)
+        async def move_to_discovery(self, context: RunContext) -> str:
+            """Move on to finding out what the caller needs."""
+            return "Thanks. What brought you in today?"
+
+    agent = QualificationAgent()
+    tools = {t.info.name: t for t in agent.tools}
+    assert "move_to_discovery" in tools
+
+    schema = build_legacy_openai_schema(tools["move_to_discovery"])["function"]
+    assert schema["description"] == "Move on to finding out what the caller needs."
+    assert schema["parameters"]["properties"] == {}  # self and context both excluded
+
+    bound = tools["move_to_discovery"]
+    refused = run(bound(FakeRunContext(session, FakeSpeechHandle())))
+    assert recorder.phase is Phase.GREETING
+    assert "entry conditions for DISCOVERY not met" in refused
+
+    deliver_agent_speech(session)
+    admitted = run(bound(FakeRunContext(session, FakeSpeechHandle())))
+    assert admitted == "Thanks. What brought you in today?"
+    assert recorder.phase is Phase.DISCOVERY

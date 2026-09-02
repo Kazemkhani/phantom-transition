@@ -339,6 +339,21 @@ def default_refusal(current: Phase, target: Any, reason: str) -> str:
     )
 
 
+def _reads(candidate: Any, name: str) -> bool:
+    """Whether `candidate.name` can be read at all.
+
+    `hasattr` is not enough. On a method tool the first argument is the `Agent`,
+    and `Agent.session` raises `RuntimeError` when no activity is running
+    (`voice/agent.py:477-482`), which `hasattr` propagates rather than swallows.
+    Probing a tool's arguments must not be able to raise out of the guard.
+    """
+    try:
+        getattr(candidate, name)
+    except Exception:
+        return False
+    return True
+
+
 def _find_run_context(args: tuple, kwargs: dict) -> Any:
     """Locate the `RunContext` among a tool's arguments, by shape rather than type.
 
@@ -346,9 +361,12 @@ def _find_run_context(args: tuple, kwargs: dict) -> Any:
     `speech_handle` (:76-78). Matching on those two attributes rather than on
     `isinstance` is what lets the tests drive this adapter with fakes and no
     LiveKit server, and keeps `livekit.agents` out of the call path entirely.
+
+    `speech_handle` is probed first because it is the discriminating one: an
+    `Agent` bound as `self` has a `session` and no `speech_handle`.
     """
     for candidate in list(args) + list(kwargs.values()):
-        if hasattr(candidate, "session") and hasattr(candidate, "speech_handle"):
+        if _reads(candidate, "speech_handle") and _reads(candidate, "session"):
             return candidate
     return None
 
