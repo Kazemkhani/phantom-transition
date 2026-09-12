@@ -13,9 +13,11 @@ A minimal reproduction, and fix, for a failure mode in phase-gated multi-agent v
 pip install -e ".[dev]" && pytest -v
 ```
 
-24 tests. No dependencies beyond pytest.
+67 tests. No dependencies beyond pytest. The LiveKit adapter is an optional
+extra: the core package imports nothing outside the standard library, and its
+tests run with fakes and no LiveKit installed.
 
-**Contents** &nbsp;·&nbsp; [The fault](#the-fault) &nbsp;·&nbsp; [Why it matters beyond voice](#why-it-matters-beyond-voice) &nbsp;·&nbsp; [The three fixes](#the-three-fixes) &nbsp;·&nbsp; [The guard](#the-guard) &nbsp;·&nbsp; [The twelve guard tests](#the-twelve-guard-tests) &nbsp;·&nbsp; [What this is not](#what-this-is-not)
+**Contents** &nbsp;·&nbsp; [The fault](#the-fault) &nbsp;·&nbsp; [Why it matters beyond voice](#why-it-matters-beyond-voice) &nbsp;·&nbsp; [The three fixes](#the-three-fixes) &nbsp;·&nbsp; [The guard](#the-guard) &nbsp;·&nbsp; [The twelve guard tests](#the-twelve-guard-tests) &nbsp;·&nbsp; [Adopting the guard in LiveKit Agents](#adopting-the-guard-in-livekit-agents) &nbsp;·&nbsp; [What this is not](#what-this-is-not)
 
 ---
 
@@ -219,12 +221,101 @@ phase: GREETING
 
 Three further tests check the guard is a gate rather than a wall: the legitimate path still traverses all four phases, the guard is pure, and `Facts` cannot be mutated in place.
 
+## Adopting the guard in LiveKit Agents
+
+```
+pip install -e ".[livekit]"
+```
+
+(Not published to PyPI. Clone the repository and install it from the working tree.)
+
+Five lines, inside a worker you already have. `examples/livekit_guarded_agent.py` is the whole thing on a real `Agent`.
+
+```python
+from phantom_transition import Phase
+from phantom_transition.livekit import guard_session, guarded_transition
+
+guard_session(session)                                    # 1
+
+@function_tool()                                          # 2
+@guarded_transition(Phase.DISCOVERY)                      # 3
+async def move_to_discovery(context: RunContext) -> str:  # 4
+    return "Thanks. What brought you in today?"           # 5
+```
+
+Line 1 attaches a `FactsRecorder` to the session. It subscribes to `speech_created` and `user_input_transcribed` and writes the guard's facts from what it observes: a greeting counts as delivered when the speech handle that carried it completes with `SpeechHandle.interrupted` False, and a discovery answer counts when a user turn completes. It never reads `UserInputTranscribedEvent.transcript`. The utterance is not one of the guard's inputs at any point in the chain.
+
+The recorder also owns the commit point, and that is the part that matters. The transition does not commit inside the tool call. It is staged against the speech handle that proposed it and committed when that handle completes, in the same callback that writes the turn's facts, facts first.
+
+Lines 2 to 5 are an ordinary function tool with one decorator added. `@guarded_transition` goes **under** `@function_tool()`, closest to the function; above it, `function_tool` would build the tool's name, description and schema from the wrong callable.
+
+The decorated tool refuses on three grounds and returns a spoken string rather than raising, so the model keeps its turn and can recover. The first two are answered inside the tool call, because no amount of turn left to run can make a phase skip legal. The third is answered at the end of the turn, because the turn's own act may be what establishes the evidence:
+
+| Refusal | Reason the model is given |
+| --- | --- |
+| the speech handle carrying the call was already interrupted | `the turn that proposed this transition was interrupted` |
+| the transition is not the next legal one | `cannot skip from GREETING to CLOSE` |
+| the destination's entry conditions are unmet | `entry conditions for PITCH not met` |
+
+A fourth refusal covers the failure that motivated the whole library: if no `FactsRecorder` is attached, the tool refuses rather than passing through. A guard that silently does nothing is the thing being fixed, not an acceptable default.
+
+Every LiveKit API name above was read out of an installed `livekit-agents` 1.7.1, not written from memory. The adapter imports `livekit.agents` lazily, inside functions, so the core package stays dependency-free and the adapter's tests run against fakes with no server, no room and no model.
+
+### Where the decision goes
+
+Cancellation is not an alternative to this, and the reason is measured rather than argued.
+
+The framework already cancels an in-flight tool call when the turn is interrupted, correctly, at `agent_activity.py:3611`:
+
+```python
+await utils.aio.cancel_and_wait(exe_task)
+```
+
+The comment two lines below it says what happens next: the results of the tools that finished are committed anyway, so the next inference does not run them again. **Cancellation closes the window only while the tool is suspended.** A phase-advance tool mutates state synchronously between two awaits and is never suspended, so cancellation is a race that has to be won every single time.
+
+The sibling asyncio reproduction measures it rather than arguing it. Three windows, each with and without cancellation (`python -m phantom_transition.interleaving`, [pull request #2](https://github.com/Kazemkhani/phantom-transition/pull/2)):
+
+| barge-in lands | tool cancelled | phantom transition |
+| --- | --- | --- |
+| before the call is issued | either | no |
+| after the call is issued, before its effect lands | no | **yes** |
+| after the call is issued, before its effect lands | yes | no |
+| after the effect has landed | no | **yes** |
+| after the effect has landed | yes | **yes** |
+
+The last row is the one a synchronous state mutation always produces, and it is the row cancellation cannot reach.
+
+So the adapter does not race. `SpeechHandle.interrupted` read inside a done callback is final, because `interrupt()` returns early on a handle that is already done (`speech_handle.py:195-197`). The question asked at the commit point is settled rather than in flight.
+
+Deferring is also cheaper than deciding early, which is the opposite of what a safety check usually costs. A transition whose entry condition is established by its own turn, such as the greeting that licenses `DISCOVERY`, is refused by an issue-time check and admitted by this one. The same enumeration over all 9,834,496 four-turn sequences reports the issue-time design refusing 19.19% of warranted transitions and violating the interruption invariant 80 times, against zero and zero for the completion-time design.
+
+`guarded_transition(..., commit="issue")` keeps the early design available so the two can be compared. It is not the one to deploy.
+
+Underneath both sits the property that does not depend on timing at all: an interrupted speech writes no fact, so a turn that was thrown away leaves no evidence behind for a later transition to cite, and a phantom transition cannot cascade.
+
+That is the difference between admission and rollback, and it is why the adapter does not try to undo a transition after the fact. `examples/livekit_guarded_agent.py` closes with a worked case: a production deployment that wrote the cancel-on-interrupt correction, using the correct APIs, and could never have fired it, for two independent reasons.
+
+### On `context.disallow_interruptions()`
+
+> [!NOTE]
+> Non-cancellation is documented, intended behaviour, and the framework already offers a per-tool opt-out. `RunContext.disallow_interruptions()` sets `allow_interruptions = False` on the speech handle carrying the call, so the turn can no longer be interrupted while the tool runs. For many mutating tools that is the right answer.
+
+It is not this one, for three reasons.
+
+1. **It spends barge-in to buy state safety, on every transition, for every caller.** In a real-time call that is a naturalness and latency cost the caller can hear.
+2. **It is a discretionary per-tool opt-in.** It protects the tools someone remembered to annotate, and does not survive the next tool being added by someone who did not read the comment above it.
+3. **It answers a different question.** It stops the turn being invalidated while the tool runs. It says nothing about whether the destination phase's entry evidence was ever recorded, so a transition to a phase the caller never earned is still admitted, and it raises `RuntimeError` if the handle is already interrupted, which is the case that started all this.
+
+To be precise about what it does buy, given the table above: `disallow_interruptions` is strictly stronger than cancellation, because cancellation only reaches a tool that is still suspended whereas this stops the interruption landing at all. That is exactly why it costs what it costs. It is the one setting that closes the last row of that table, and it closes it by taking barge-in away for the duration of every transition.
+
+The two compose, and there is every reason to use both on a tool that also charges a card. `guarded_transition` decides admission; whether the turn may be interrupted while the body runs is a separate choice.
+
 ## What this is not
 
 > [!NOTE]
 > This is a standalone reproduction written to isolate one fault, not the production system it was found in. It carries no LiveKit, no model provider and no audio, because none of those are necessary to demonstrate the mechanism, and including them would make the failure harder to see rather than easier.
 
-The production system this came from is a bilingual Arabic and English voice agent for qualification calls, carrying a 334-test suite of which ten are the guard tests reproduced here.
+The guard is a design extracted from a fault found in a production voice agent for outbound qualification calls; it is not a description of code that runs there today. That system's own interruption-cancellation hook was wired but never triggered, which is part of why the fault is worth a standalone reproduction. `examples/livekit_guarded_agent.py` reproduces that hook, anonymised, alongside the two independent reasons it could never have fired.
 
 ## Licence
 
