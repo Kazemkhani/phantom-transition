@@ -1,0 +1,6 @@
+TLC distinct states    : 289
+Python distinct states : 289
+only in TLC            : 0
+only in Python         : 0
+max phase reached      : CLOSE
+IDENTICAL: the specification and the reference implementation agree on every reachable state

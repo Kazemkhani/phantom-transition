@@ -13,7 +13,7 @@ authors = [{ name = "Amir Hossein Kazemkhani", email = "amir@amirkazemkhani.com"
 keywords = ["voice-ai", "multi-agent", "llm-agents", "barge-in", "ai-safety"]
 
 [project.optional-dependencies]
-dev = ["pytest>=7.4"]
+dev = ["pytest>=7.4", "hypothesis>=6.100"]
 
 [project.urls]
 Homepage = "https://amirkazemkhani.com"
@@ -24,3 +24,7 @@ where = ["src"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
+
+[tool.mutmut]
+paths_to_mutate = [ "src/phantom_transition/" ]
+tests_dir = [ "tests/" ]

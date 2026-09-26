@@ -1,0 +1,6 @@
+TLC distinct states    : 91
+Python distinct states : 91
+only in TLC            : 0
+only in Python         : 0
+max phase reached      : DISCOVERY
+IDENTICAL: the specification and the reference implementation agree on every reachable state
