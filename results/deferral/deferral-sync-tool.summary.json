@@ -1,0 +1,12 @@
+{
+  "all_positive": true,
+  "config": "sync-tool",
+  "deferral_ms_max": 1761.3,
+  "deferral_ms_median": 1575.5,
+  "deferral_ms_min": 1434.05,
+  "deferral_ms_p90": 1704.69,
+  "interrupted_runs": 30,
+  "n_requested": 30,
+  "n_with_deferral": 30,
+  "seed": 20260902
+}

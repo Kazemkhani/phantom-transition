@@ -1,0 +1,9 @@
+{
+  "name": "pt-agents-js-experiment",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@livekit/agents": "1.7.1",
+    "@livekit/rtc-node": "^0.13.34"
+  }
+}

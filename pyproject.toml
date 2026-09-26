@@ -24,3 +24,7 @@ where = ["src"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
+markers = [
+    "frameworks: needs the per-runtime venvs under experiments/frameworks; run via run_matrix.py",
+]
+addopts = "-m 'not frameworks'"

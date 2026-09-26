@@ -1,0 +1,20 @@
+{
+  "barge_in_suppressed": 50,
+  "cancelled": 0,
+  "command": "experiments/frameworks/livekit_1_7_1/.venv/bin/python experiments/frameworks/livekit_shared/run.py --config disallow-interruptions --n 50 --seed 20260902 --out results/frameworks/raw/livekit-1.7.1-disallow-interruptions.jsonl",
+  "committed": 50,
+  "config": "disallow-interruptions",
+  "finished": "2026-09-02T07:56:08+00:00",
+  "handoff_applied": null,
+  "mechanism": "agent_activity.py:3610-3630 (_pipeline_reply_task_impl): on interruption `await utils.aio.cancel_and_wait(exe_task)` (line 3611) cancels the tool dispatcher task, whose `except asyncio.CancelledError` at generation.py:968-978 awaits the running tool tasks to completion instead of cancelling them; every finished tool's FunctionCall and FunctionCallOutput are then inserted into the chat context and `function_tools_executed` is emitted (lines 3621-3630; comment at 3613: commit results of tools that finished despite the interruption, #3702). generation.py:1077-1088 `_interrupted_tool_output` rewrites only an agent-handoff output to an error and the handoff is never applied; a state mutation inside the tool body stands. A call the LLM had not yet emitted is never made because the LLM task is cancelled with the other generation tasks at agent_activity.py:3561. disallow_interruptions() (events.py:88-97) sets SpeechHandle.allow_interruptions=False, which _interrupt_by_audio_activity checks at agent_activity.py:2145 before calling interrupt() at 2176",
+  "n": 50,
+  "rate": 1.0,
+  "runtime": "LiveKit Agents (Python)",
+  "runtime_version": "1.7.1",
+  "seed": 20260902,
+  "started": "2026-09-02T07:47:49+00:00",
+  "tool_finished": 50,
+  "tool_record_kept": 50,
+  "unexpected": 0,
+  "verdict": "committed"
+}

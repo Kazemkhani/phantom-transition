@@ -1,0 +1,18 @@
+{
+  "barge_in_suppressed": 0,
+  "cancelled": 0,
+  "command": "experiments/frameworks/pipecat/.venv/bin/python experiments/frameworks/pipecat/run.py --config inflight-tool --optout --n 50 --seed 20260902 --out results/frameworks/raw/pipecat-inflight-optout.jsonl",
+  "committed": 50,
+  "config": "inflight-tool (cancel_on_interruption=False)",
+  "handoff_applied": null,
+  "mechanism": "side measurement: the per-tool opt-out register_function(..., cancel_on_interruption=False) at in-flight timing converts the cancelled cell into a committed phantom; barge-in is not suppressed",
+  "n": 50,
+  "rate": 1.0,
+  "runtime": "Pipecat",
+  "runtime_version": "1.8.1",
+  "seed": 20260902,
+  "tool_finished": 50,
+  "tool_record_kept": 50,
+  "unexpected": 0,
+  "verdict": "committed"
+}
