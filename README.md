@@ -7,7 +7,7 @@ A minimal reproduction, and fix, for a failure mode in phase-gated multi-agent v
 [![tests](https://img.shields.io/github/actions/workflow/status/Kazemkhani/phantom-transition/ci.yml?branch=main&style=flat-square&label=tests)](https://github.com/Kazemkhani/phantom-transition/actions/workflows/ci.yml)
 [![python](https://img.shields.io/badge/python-3.10%2B-4b5563?style=flat-square)](pyproject.toml)
 [![dependencies](https://img.shields.io/badge/dependencies-none-4b5563?style=flat-square)](pyproject.toml)
-[![licence](https://img.shields.io/badge/licence-MIT-4b5563?style=flat-square)](LICENSE)
+[![licence](https://img.shields.io/badge/licence-Apache--2.0-4b5563?style=flat-square)](LICENSE)
 
 ```
 pip install -e ".[dev]" && pytest -v
@@ -222,10 +222,10 @@ Three further tests check the guard is a gate rather than a wall: the legitimate
 ## What this is not
 
 > [!NOTE]
-> This is a standalone reproduction written to isolate one fault, not the production system it was found in. It carries no LiveKit, no model provider and no audio, because none of those are necessary to demonstrate the mechanism, and including them would make the failure harder to see rather than easier.
+> This is a standalone reproduction written to isolate one fault, not the voice agent it was found in. It carries no LiveKit, no model provider and no audio, because none of those are necessary to demonstrate the mechanism, and including them would make the failure harder to see rather than easier.
 
-The production system this came from is a bilingual Arabic and English voice agent for qualification calls, carrying a 334-test suite of which ten are the guard tests reproduced here.
+The fault was found while building a bilingual Arabic and English voice agent for qualification calls. The guard and the tests in this repository are the reference implementation; they are not part of that agent's own test suite.
 
 ## Licence
 
-MIT. Amir Hossein Kazemkhani, [amirkazemkhani.com](https://amirkazemkhani.com).
+Apache-2.0. Amir Hossein Kazemkhani, [amirkazemkhani.com](https://amirkazemkhani.com).
