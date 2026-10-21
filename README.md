@@ -7,7 +7,7 @@ A minimal reproduction, and fix, for a failure mode in phase-gated multi-agent v
 [![tests](https://img.shields.io/github/actions/workflow/status/Kazemkhani/phantom-transition/ci.yml?branch=main&style=flat-square&label=tests)](https://github.com/Kazemkhani/phantom-transition/actions/workflows/ci.yml)
 [![python](https://img.shields.io/badge/python-3.10%2B-4b5563?style=flat-square)](pyproject.toml)
 [![dependencies](https://img.shields.io/badge/dependencies-none-4b5563?style=flat-square)](pyproject.toml)
-[![licence](https://img.shields.io/badge/licence-MIT-4b5563?style=flat-square)](LICENSE)
+[![licence](https://img.shields.io/badge/licence-Apache--2.0-4b5563?style=flat-square)](LICENSE)
 
 ```
 pip install -e ".[dev]" && pytest -v
@@ -228,4 +228,4 @@ The fault was found while building a bilingual Arabic and English voice agent fo
 
 ## Licence
 
-MIT. Amir Hossein Kazemkhani, [amirkazemkhani.com](https://amirkazemkhani.com).
+Apache-2.0. Amir Hossein Kazemkhani, [amirkazemkhani.com](https://amirkazemkhani.com).
